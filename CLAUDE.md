@@ -18,7 +18,7 @@ LibApiCompose is a solaegis ESO PC **library**: SafeCall/SafeCallMulti, iterate 
 
 Load order: Core → Iterate → BagSlot → Gear → Collectible → Quickslot → ItemLink → Companion.
 
-See `docs/ARCHITECTURE.md` and `docs/ARCHITECTURE_DECISIONS.md`.
+See `docs/ARCHITECTURE.md` and `docs/ARCHITECTURE_DECISIONS.md`. Developer docs site: `docs/` (MkDocs, `mkdocs.yml`), published to GitHub Pages.
 
 ## Code Conventions
 
@@ -26,3 +26,4 @@ See `docs/ARCHITECTURE.md` and `docs/ARCHITECTURE_DECISIONS.md`.
 - All ZOS calls via `LAC.SafeCall` / `SafeCallMulti`
 - Fresh compose records; copy cached lists; `ClearCache` public
 - After code changes: `task install:live`
+- Public API changes need a reference heading (### `Module.Function`) in `docs/reference/`; `task docs:build` checks it

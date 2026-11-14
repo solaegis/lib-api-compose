@@ -23,6 +23,9 @@ includes:
   release:
     taskfile: ./taskfiles/Release.yaml
     internal: false
+  docs:
+    taskfile: ./taskfiles/Docs.yaml
+    internal: false
 
 tasks:
   default:

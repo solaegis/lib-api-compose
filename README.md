@@ -3,6 +3,7 @@
 [![Version](https://img.shields.io/github/v/release/solaegis/lib-api-compose?include_prereleases&sort=semver&label=Version)](https://github.com/solaegis/lib-api-compose/releases)
 [![ESO API](https://img.shields.io/badge/ESO_API-101051-blue)](https://github.com/solaegis/lib-api-compose)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-solaegis.github.io-orange)](https://solaegis.github.io/lib-api-compose/)
 
 solaegis ESO **library**: canonical `SafeCall` / `SafeCallMulti`, index walkers, and shared compose/enrich helpers (bag, gear, collectibles, quickslots, OnUse links, companions). Read-only — not a product addon.
 
@@ -54,6 +55,9 @@ read live, and category lists are invalidated by the library's own collection ev
 | `## AddOnVersion:` | Encoded integer (`1.0.0` → `10000`) |
 
 ## Docs
+
+**Developer documentation: <https://solaegis.github.io/lib-api-compose/>** — installation, guides, recipes and
+the full API reference. Source in [`docs/`](docs/); preview locally with `task docs:serve`.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Architecture decisions (ADRs)](docs/ARCHITECTURE_DECISIONS.md)

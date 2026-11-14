@@ -15,3 +15,7 @@ book/
 *.bak
 *.swp
 *.swo
+
+# Docs site
+site/
+.venv-docs/

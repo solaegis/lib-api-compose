@@ -37,3 +37,9 @@ scripts
 .cursor
 
 .DS_Store
+
+# Docs site
+site
+.venv-docs
+mkdocs.yml
+requirements-docs.txt

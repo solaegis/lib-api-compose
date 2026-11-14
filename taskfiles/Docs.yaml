@@ -1,0 +1,34 @@
+version: "3"
+
+vars:
+  DOCS_VENV: .venv-docs
+  MKDOCS: "{{.DOCS_VENV}}/bin/mkdocs"
+
+tasks:
+  install:
+    desc: Create the docs virtualenv and install MkDocs + Material
+    cmds:
+      - python3 -m venv {{.DOCS_VENV}}
+      - "{{.DOCS_VENV}}/bin/pip install --quiet -r requirements-docs.txt"
+    status:
+      - test -x {{.MKDOCS}}
+    silent: true
+
+  check:
+    desc: Fail if a public API function has no reference entry, or a Lua example does not parse
+    cmds:
+      - bash scripts/check-api-docs.sh
+    silent: true
+
+  build:
+    desc: Build the documentation site (strict — broken links fail)
+    deps: [install, check]
+    cmds:
+      - "{{.MKDOCS}} build --strict"
+    silent: true
+
+  serve:
+    desc: Serve the documentation site locally with live reload
+    deps: [install]
+    cmds:
+      - "{{.MKDOCS}} serve"

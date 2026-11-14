@@ -1,0 +1,107 @@
+site_name: LibApiCompose
+site_description: Developer documentation for LibApiCompose — SafeCall, iteration and compose helpers for Elder Scrolls Online addons.
+site_url: https://solaegis.github.io/lib-api-compose/
+repo_url: https://github.com/solaegis/lib-api-compose
+repo_name: solaegis/lib-api-compose
+edit_uri: edit/main/docs/
+docs_dir: docs
+strict: true
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep orange
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep orange
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.tabs.link
+    - content.action.edit
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Quick start: getting-started/quickstart.md
+      - Versioning: getting-started/versioning.md
+  - Guides:
+      - Core concepts: guides/concepts.md
+      - SafeCall: guides/safecall.md
+      - Iteration: guides/iteration.md
+      - Caching: guides/caching.md
+      - Best practices: guides/best-practices.md
+      - Recipes: guides/recipes.md
+      - Troubleshooting: guides/troubleshooting.md
+  - API reference:
+      - reference/index.md
+      - Core: reference/core.md
+      - Iterate: reference/iterate.md
+      - BagSlot: reference/bagslot.md
+      - Gear: reference/gear.md
+      - Collectible: reference/collectible.md
+      - Quickslot: reference/quickslot.md
+      - ItemLink: reference/itemlink.md
+      - Companion: reference/companion.md
+      - Record schemas: reference/records.md
+      - Stability policy: reference/stability.md
+  - Contributing:
+      - contributing/index.md
+      - Testing: contributing/testing.md
+      - Adding an API: contributing/adding-an-api.md
+      - Documentation: contributing/docs.md
+      - Architecture: ARCHITECTURE.md
+      - Decisions (ADRs): ARCHITECTURE_DECISIONS.md
+      - Enrichment styles: ENRICHMENT_STYLES.md
+      - Lua patterns: LUA_PATTERNS.md
+      - Versioning internals: VERSION_PLACEHOLDER_SYSTEM.md
+      - Publishing: PUBLISHING.md
+      - Development (legacy): DEVELOPMENT.md
+      - ESOUI best practices: esoui-addon-best-practices.md
+  - Changelog: changelog.md

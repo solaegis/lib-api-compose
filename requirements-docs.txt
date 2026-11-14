@@ -1,0 +1,3 @@
+# Documentation site toolchain (MkDocs + Material). Not shipped in the addon ZIP.
+mkdocs==1.6.1
+mkdocs-material==9.7.1
