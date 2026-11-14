@@ -1,0 +1,82 @@
+-- Luacheck for LibApiCompose (ESO Lua 5.1)
+
+std = "lua51"
+
+ignore = {
+    "212", -- unused argument
+    "631", -- line too long
+}
+
+globals = {
+    LibApiCompose = {
+        other_fields = true,
+    },
+}
+
+read_globals = {
+    "d",
+    "zo_callLater",
+    "zo_strformat",
+    "GetAddOnMetadata",
+    "LibDebugLogger",
+    "_G",
+    "pcall",
+    "unpack",
+    "select",
+    "GetItemId",
+    "GetItemLink",
+    "GetItemType",
+    "GetItemName",
+    "GetItemFunctionalQuality",
+    "GetItemQuality",
+    "GetItemActorCategory",
+    "GetSlotStackSize",
+    "GetItemTrait",
+    "GetItemLinkTraitType",
+    "GetItemLinkSetInfo",
+    "GetItemLinkEnchantInfo",
+    "GetItemLinkIcon",
+    "GetItemLinkOnUseAbilityInfo",
+    "GetItemLinkOnUseAbilityId",
+    "CanItemLinkBeTraitResearched",
+    "CanItemBeMarkedAsJunk",
+    "IsItemJunk",
+    "IsItemPlayerLocked",
+    "GetCollectibleName",
+    "GetCollectibleNickname",
+    "GetCollectibleIcon",
+    "GetCollectibleInfo",
+    "GetCollectibleCategoryType",
+    "IsCollectibleUnlocked",
+    "IsCollectibleActive",
+    "GetTotalCollectiblesByCategoryType",
+    "GetCollectibleIdFromType",
+    "GetActiveCollectibleByType",
+    "HasActiveCompanion",
+    "GetActiveCompanionDefId",
+    "GetCompanionCollectibleId",
+    "GetSlotType",
+    "GetSlotBoundId",
+    "GetSlotName",
+    "GetSlotTexture",
+    "GetSlotItemCount",
+    "IsSlotUsable",
+    "GetString",
+    "LINK_STYLE_DEFAULT",
+    "ITEMTYPE_WEAPON",
+    "ITEMTYPE_ARMOR",
+    "ITEMTYPE_GLYPH_ARMOR",
+    "ITEMTYPE_GLYPH_JEWELRY",
+    "ITEMTYPE_GLYPH_WEAPON",
+    "ITEM_TRAIT_TYPE_NONE",
+    "ITEM_TRAIT_TYPE_WEAPON_INTRICATE",
+    "ITEM_TRAIT_TYPE_ARMOR_INTRICATE",
+    "ITEM_TRAIT_TYPE_JEWELRY_INTRICATE",
+    "GAMEPLAY_ACTOR_CATEGORY_PLAYER",
+    "GAMEPLAY_ACTOR_CATEGORY_COMPANION",
+    "COLLECTIBLE_CATEGORY_TYPE_COMPANION",
+    "HOTBAR_CATEGORY_PRIMARY",
+    "HOTBAR_CATEGORY_BACKUP",
+    "HOTBAR_CATEGORY_QUICKSLOT_WHEEL",
+    "ACTION_TYPE_COLLECTIBLE",
+}

@@ -1,0 +1,33 @@
+# LibApiCompose - Cursor Rules
+
+## ESO Lua Version Compatibility
+
+**CRITICAL: ESO uses Lua 5.1**
+
+- **NO `goto` statements**
+- No bitwise operators (use bit library if needed)
+- No `__pairs` / `__ipairs` metamethods
+
+## Namespace
+
+- Global: `LibApiCompose`, alias `local LAC = LibApiCompose`
+- Do not pollute the global namespace
+
+## Library rules
+
+- `## IsLibrary: true`; no SavedVariables; no LAM; no LibStub
+- All ZOS calls via `LAC.SafeCall` / `LAC.SafeCallMulti`
+- Read-only — no Use*/Set*/Request* wrappers
+- Compose retains raw handles; no Decompose*
+- Amend `docs/ARCHITECTURE_DECISIONS.md` when overturning a decision
+
+## Versioning
+
+- `## Version:` / `@project-version@` → semver from git tag
+- `## AddOnVersion:` → encoded integer major*10000+minor*100+patch
+
+## Development Workflow
+
+- After code changes: `task install:live`, then `/reloadui`
+- PC manifest is `.txt`, never `.addon`
+- New YAML files use `.yaml` suffix
