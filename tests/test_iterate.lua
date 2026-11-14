@@ -50,4 +50,45 @@ describe("Iterate", function()
         -- (1,1) then (2,1),(2,2) => 3
         assertEqual(#list, 3)
     end)
+
+    it("ForIndex forwards multiple returns with needMulti", function()
+        local LAC = LibApiCompose
+        local got = {}
+        LAC.ForIndex(function()
+            return 2
+        end, function(i)
+            return i, nil, "x" .. i
+        end, function(i, a, b, c)
+            got[i] = { a = a, b = b, c = c }
+        end, true)
+        assertEqual(got[2].a, 2)
+        assertEqual(got[2].b, nil)
+        assertEqual(got[2].c, "x2")
+    end)
+
+    it("ForIndex survives a failing getNum", function()
+        local LAC = LibApiCompose
+        local calls = 0
+        LAC.ForIndex(
+            function()
+                error("no")
+            end,
+            nil,
+            function()
+                calls = calls + 1
+            end
+        )
+        assertEqual(calls, 0)
+    end)
+
+    it("ForLinked stops at maxSteps on a cycle", function()
+        local LAC = LibApiCompose
+        local list = LAC.ForLinked(function(id)
+            if id == nil then
+                return 1
+            end
+            return id == 1 and 2 or 1
+        end, nil, 5)
+        assertEqual(#list, 5)
+    end)
 end)

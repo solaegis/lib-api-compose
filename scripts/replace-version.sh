@@ -22,7 +22,7 @@ replace_in_file() {
   echo "  Replacing @project-version@ in: $file"
   # Protect ## AddOnVersion: lines from semver injection (ESO atoi requires integer).
   local tmp
-  tmp=$(mktemp)
+  tmp=$(mktemp "${TMPDIR:-/tmp}/lac-version.XXXXXX")
   awk -v ver="$VERSION" '
     /^## AddOnVersion:/ { print; next }
     { gsub(/@project-version@/, ver); print }

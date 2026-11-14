@@ -3,7 +3,10 @@
 | Placeholder | Where | Becomes |
 |-------------|-------|---------|
 | `@project-version@` | `## Version:`, `LAC.VERSION` in Core.lua, README_ESOUI | Semver from git tag (e.g. `1.0.0`) |
-| `@addon-build-version@` | `## AddOnVersion:` | Encoded integer via `set-addon-version.sh` |
+| _(integer, committed)_ | `## AddOnVersion:`, `LAC.ADDON_VERSION` in Core.lua | Encoded integer via `set-addon-version.sh` |
+
+The source manifest commits a real integer (the current release's encoding, e.g. `10000`) rather than a
+placeholder, so symlink dev installs (`task install:dev`) satisfy `DependsOn: LibApiCompose>=N`.
 
 ## Encoding
 
@@ -15,7 +18,9 @@
 | 1.2.3 | 10203 |
 | 2.0.0 | 20000 |
 
-Non-semver (dev / SHA) → `1` (floor so ZIP validation and DependsOn still work).
+Minor and patch must be `< 100`; the script fails the build otherwise (`1.100.0` would collide with `2.0.0`).
+
+Non-semver (dev / SHA) → keeps the committed integer (falls back to `1` if none), so dev installs still satisfy DependsOn.
 
 ```bash
 ./scripts/replace-version.sh build/LibApiCompose 1.0.0

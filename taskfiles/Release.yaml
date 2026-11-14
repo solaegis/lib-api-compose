@@ -13,7 +13,7 @@ tasks:
     desc: Display release checklist summary
     cmds:
       - |
-        echo "SolaegisAddonTemplate — Release Checklist"
+        echo "LibApiCompose — Release Checklist"
         echo "========================================="
         echo ""
         echo "1. CODE QUALITY"

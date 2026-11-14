@@ -132,7 +132,7 @@ validate_zip_structure() {
 validate_manifest_content() {
     local zip_file="$1"
     local temp_dir
-    temp_dir=$(mktemp -d)
+    temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/lac-zip.XXXXXX")
     unzip -q "$zip_file" "${ADDON_NAME}/${ADDON_NAME}.txt" -d "$temp_dir"
     local manifest_file="$temp_dir/${ADDON_NAME}/${ADDON_NAME}.txt"
 

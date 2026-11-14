@@ -7,22 +7,21 @@ tasks:
       - |
         echo "Installing {{.ADDON_NAME}} to ESO Live..."
 
-        if git rev-parse --git-dir >/dev/null 2>&1 && git rev-parse HEAD >/dev/null 2>&1; then
-          if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
-            VERSION=$(git describe --tags --exact-match HEAD | sed 's/^v//')
-          elif git describe --tags >/dev/null 2>&1; then
-            VERSION=$(git describe --tags | sed 's/^v//')
-          else
-            VERSION=$(git rev-parse --short HEAD)
-          fi
-        else
-          VERSION="dev"
+        TARGET="{{.ESO_LIVE_ADDONS}}/{{.ADDON_NAME}}"
+        if [ -L "$TARGET" ]; then
+          echo "Refusing to copy over a dev symlink at $TARGET (it points at this repo)."
+          echo "Run 'task install:uninstall' first, or keep using the symlink."
+          exit 1
         fi
+
+        VERSION=$(./scripts/detect-version.sh --describe)
         echo "   Using version: ${VERSION}"
 
+        # Start from a clean src/ so files deleted in the repo don't linger in AddOns.
+        rm -rf "$TARGET/{{.SRC_DIR}}"
         mkdir -p "{{.ESO_LIVE_ADDONS}}/{{.ADDON_NAME}}/{{.SRC_DIR}}"
         cp {{.MANIFEST_FILE}} "{{.ESO_LIVE_ADDONS}}/{{.ADDON_NAME}}/"
-        cp -r {{.SRC_DIR}}/ "{{.ESO_LIVE_ADDONS}}/{{.ADDON_NAME}}/{{.SRC_DIR}}"
+        cp -R {{.SRC_DIR}}/. "{{.ESO_LIVE_ADDONS}}/{{.ADDON_NAME}}/{{.SRC_DIR}}/"
 
         if [ -d textures ]; then
           mkdir -p "{{.ESO_LIVE_ADDONS}}/{{.ADDON_NAME}}/textures"

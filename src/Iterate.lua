@@ -5,7 +5,8 @@ LAC.Iterate = LAC.Iterate or {}
 local Iterate = LAC.Iterate
 
 --- Flat index walk: for i = 1, getNum() do fn(i, getAt(i)?) end
---- getAt is optional; when present it is invoked with SafeCallMulti when needMulti is true.
+--- getAt is optional; when present it is invoked with SafeCallMulti when needMulti is true
+--- (up to 8 return values are forwarded). Errors in fn itself are not caught.
 function Iterate.ForIndex(getNum, getAt, fn, needMulti)
     if not fn then
         return
@@ -45,9 +46,9 @@ function Iterate.MapIndex(getNum, getAt, mapFn, needMulti)
     return list
 end
 
---- Nested levels: levels is array of { getNum = fn(...parentIndices), getAt? = fn(...), map? }.
---- Example: NestedMap({ { getNum = function() return GetNumSkillTypes() end }, ... })
---- Simpler API: NestedMap(spec) where each level has getNum(parent...), and optional leaf mapFn.
+--- Nested index walk. levels is an array of { getNum = fn(parentIndices...) }.
+--- fn(i1, i2, ..., iN) is called for every leaf index tuple.
+--- Example: NestedFor({ { getNum = GetNumSkillTypes }, { getNum = GetNumSkillLines } }, fn)
 function Iterate.NestedFor(levels, fn)
     if not levels or #levels == 0 or not fn then
         return
@@ -91,16 +92,20 @@ function Iterate.NestedMap(levels, mapFn)
     return list
 end
 
---- Linked-list walker: start with getNext(nil) or first id, then getNext(id) until nil.
---- getNext(id) returns next id (or first when id is nil).
-function Iterate.ForLinked(getNext, mapFn)
+Iterate.MAX_LINKED_STEPS = 100000
+
+--- Linked-list walker: getNext(nil) returns the first id, getNext(id) the next, nil ends.
+--- Collects mapFn(id) results (non-nil) or the ids themselves when mapFn is nil.
+--- maxSteps (default Iterate.MAX_LINKED_STEPS) guards against cycles; hitting it is logged.
+function Iterate.ForLinked(getNext, mapFn, maxSteps)
     local list = {}
     if not getNext then
         return list
     end
+    maxSteps = maxSteps or Iterate.MAX_LINKED_STEPS
     local id = LAC.SafeCall(getNext, nil)
     local guard = 0
-    while id and guard < 100000 do
+    while id and guard < maxSteps do
         guard = guard + 1
         if mapFn then
             local rec = mapFn(id)
@@ -111,6 +116,9 @@ function Iterate.ForLinked(getNext, mapFn)
             list[#list + 1] = id
         end
         id = LAC.SafeCall(getNext, id)
+    end
+    if id and guard >= maxSteps then
+        LAC.DebugPrint("ITERATE", "ForLinked stopped at maxSteps=" .. tostring(maxSteps))
     end
     return list
 end

@@ -1,16 +1,9 @@
 repos:
   - repo: https://github.com/JohnnyMorganz/StyLua
-    rev: v2.3.1
+    rev: v2.6.0
     hooks:
       - id: stylua
         args: [--config-path=.stylua.toml]
-        files: \.lua$
-
-  - repo: https://github.com/luarocks/luacheck
-    rev: v1.2.0
-    hooks:
-      - id: luacheck
-        args: [--config=.luacheckrc]
         files: \.lua$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -26,11 +19,19 @@ repos:
 
   - repo: local
     hooks:
-      - id: validate-manifest
-        name: Validate SolaegisAddonTemplate.txt manifest
-        entry: bash -c 'lua scripts/validate-manifest.lua SolaegisAddonTemplate.txt || luajit scripts/validate-manifest.lua SolaegisAddonTemplate.txt'
+      # Uses the luacheck on PATH (same as `task lint` and CI). The upstream hook builds
+      # luacheck against the host's default Lua, which breaks on Lua 5.4+/5.5.
+      - id: luacheck
+        name: Luacheck
+        entry: luacheck --config .luacheckrc
         language: system
-        files: ^SolaegisAddonTemplate\.txt$
+        files: \.lua$
+
+      - id: validate-manifest
+        name: Validate LibApiCompose.txt manifest
+        entry: bash -c 'lua scripts/validate-manifest.lua LibApiCompose.txt || luajit scripts/validate-manifest.lua LibApiCompose.txt'
+        language: system
+        files: ^LibApiCompose\.txt$
         pass_filenames: false
 
       - id: validate-esoui-static
@@ -38,6 +39,6 @@ repos:
         entry: bash scripts/validate-esoui-compliance.sh --static
         language: system
         pass_filenames: false
-        files: ^(SolaegisAddonTemplate\.txt|README_ESOUI\.txt|src/Init\.lua|src/Core\.lua)$
+        files: ^(LibApiCompose\.txt|README_ESOUI\.txt|src/Core\.lua)$
 
 default_install_hook_types: [pre-commit]

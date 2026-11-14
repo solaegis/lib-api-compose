@@ -6,7 +6,7 @@ solaegis ESO library: SafeCall / SafeCallMulti, index walkers, and compose helpe
 [LIST]
 [*] Install this library once under AddOns/LibApiCompose
 [*] Add to your manifest: [COLOR=2ea5f1]## DependsOn: LibApiCompose>=10000[/COLOR] (AddOnVersion for v1.0.0)
-[*] Global: LibApiCompose (alias LAC)
+[*] Global: LibApiCompose (convention: local LAC = LibApiCompose)
 [*] Read-only: no UseItem / write wrappers - products own secure calls
 [/LIST]
 

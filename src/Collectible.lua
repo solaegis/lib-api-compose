@@ -1,29 +1,69 @@
 -- LibApiCompose — Collectible compose + category lists (styles C, G)
+--
+-- Caching model:
+--   * Static facts (name, icon, category) are memoised per id.
+--   * Volatile facts (unlocked, active, nickname) are read live on every Compose.
+--   * Unlocked-by-category id lists and name indexes are memoised and cleared by the
+--     library's own collection events (read-only self-invalidation; no callback bus).
+--   * Every returned record/list/map is freshly built — callers own it.
 
 local LAC = LibApiCompose
 LAC.Collectible = LAC.Collectible or {}
 local Collectible = LAC.Collectible
+local SafeCall = LAC.SafeCall
 
-local _byId = {}
-local _byCategory = {}
+local _static = {}
+local _unlockedIds = {}
 local _nameIndex = {}
 
-local function cleanName(name)
-    if not name or type(name) ~= "string" then
-        return name
-    end
-    return name:gsub("%^%w+$", "")
-end
-
+--- Drop every collectible memo (static facts, category lists, name indexes).
 function Collectible.ClearCache()
-    _byId = {}
-    _byCategory = {}
+    _static = {}
+    _unlockedIds = {}
     _nameIndex = {}
 end
 
---- Compose collectible id → record, or nil if invalid.
+--- Drop only membership caches (unlocked lists + name indexes). Called by collection events.
+function Collectible.InvalidateLists()
+    _unlockedIds = {}
+    _nameIndex = {}
+end
+
+local function staticFacts(collectibleId, skipCache)
+    if not skipCache and _static[collectibleId] then
+        return _static[collectibleId]
+    end
+
+    local name = SafeCall(GetCollectibleName, collectibleId)
+    if (name == nil or name == "") and GetCollectibleInfo then
+        local ok, infoName = LAC.SafeCallMulti(GetCollectibleInfo, collectibleId)
+        if ok then
+            name = infoName
+        end
+    end
+
+    local facts = {
+        name = LAC.FormatName(name),
+        icon = SafeCall(GetCollectibleIcon, collectibleId),
+        category = SafeCall(GetCollectibleCategoryType, collectibleId),
+    }
+    if not skipCache then
+        _static[collectibleId] = facts
+    end
+    return facts
+end
+
+local function isActive(collectibleId)
+    if GAMEPLAY_ACTOR_CATEGORY_PLAYER ~= nil then
+        return SafeCall(IsCollectibleActive, collectibleId, GAMEPLAY_ACTOR_CATEGORY_PLAYER) == true
+    end
+    return SafeCall(IsCollectibleActive, collectibleId) == true
+end
+
+--- Compose collectible id → fresh record, or nil if invalid.
 --- Identity: id
 --- Fields: name, nickname, icon, category, unlocked, active
+--- opts.skipCache — bypass the static-facts memo.
 function Collectible.Compose(collectibleId, opts)
     opts = opts or {}
     collectibleId = tonumber(collectibleId)
@@ -31,117 +71,61 @@ function Collectible.Compose(collectibleId, opts)
         return nil
     end
 
-    if not opts.skipCache and _byId[collectibleId] then
-        -- Return a shallow copy of the cached record (ownership)
-        local cached = _byId[collectibleId]
-        local copy = {}
-        for k, v in pairs(cached) do
-            copy[k] = v
-        end
-        return copy
+    local facts = staticFacts(collectibleId, opts.skipCache)
+    local nickname = LAC.FormatName(SafeCall(GetCollectibleNickname, collectibleId))
+    if nickname == "" then
+        nickname = nil
     end
 
-    local name = cleanName(LAC.SafeCall(GetCollectibleName, collectibleId))
-    if not name and GetCollectibleInfo then
-        local ok, infoName = LAC.SafeCallMulti(GetCollectibleInfo, collectibleId)
-        if ok then
-            name = cleanName(infoName)
-        end
-    end
-
-    local nickname = nil
-    if GetCollectibleNickname then
-        nickname = cleanName(LAC.SafeCall(GetCollectibleNickname, collectibleId))
-    end
-
-    local icon = nil
-    if GetCollectibleIcon then
-        icon = LAC.SafeCall(GetCollectibleIcon, collectibleId)
-    end
-
-    local category = nil
-    if GetCollectibleCategoryType then
-        category = LAC.SafeCall(GetCollectibleCategoryType, collectibleId)
-    end
-
-    local unlocked = false
-    if IsCollectibleUnlocked then
-        unlocked = LAC.SafeCall(IsCollectibleUnlocked, collectibleId) == true
-    end
-
-    local active = false
-    if IsCollectibleActive then
-        local actor = GAMEPLAY_ACTOR_CATEGORY_PLAYER
-        active = LAC.SafeCall(IsCollectibleActive, collectibleId, actor) == true
-            or LAC.SafeCall(IsCollectibleActive, collectibleId) == true
-    end
-
-    local rec = {
+    return {
         id = collectibleId,
-        name = name,
+        name = facts.name,
         nickname = nickname,
-        icon = icon,
-        category = category,
-        unlocked = unlocked,
-        active = active,
+        icon = facts.icon,
+        category = facts.category,
+        unlocked = SafeCall(IsCollectibleUnlocked, collectibleId) == true,
+        active = isActive(collectibleId),
     }
+end
 
-    if not opts.skipCache then
-        _byId[collectibleId] = rec
+local function unlockedIdsFor(categoryType)
+    local cached = _unlockedIds[categoryType]
+    if cached then
+        return cached
     end
-
-    local copy = {}
-    for k, v in pairs(rec) do
-        copy[k] = v
+    local total = SafeCall(GetTotalCollectiblesByCategoryType, categoryType) or 0
+    local ids = {}
+    for i = 1, total do
+        local id = SafeCall(GetCollectibleIdFromType, categoryType, i)
+        if id and SafeCall(IsCollectibleUnlocked, id) == true then
+            ids[#ids + 1] = id
+        end
     end
-    return copy
+    cached = { ids = ids, total = total }
+    _unlockedIds[categoryType] = cached
+    return cached
 end
 
 --- Unlocked collectibles for a category type.
---- Returns { list = {...}, count = n, total = m } (list is a copy).
+--- Returns { list = {fresh records...}, count = n, total = m }.
 function Collectible.ComposeUnlockedByCategory(categoryType)
     if categoryType == nil then
         return { list = {}, count = 0, total = 0 }
     end
 
-    if _byCategory[categoryType] then
-        local cached = _byCategory[categoryType]
-        return {
-            list = LAC.CopyList(cached.list),
-            count = cached.count,
-            total = cached.total,
-        }
-    end
-
-    local total = 0
-    if GetTotalCollectiblesByCategoryType then
-        total = LAC.SafeCall(GetTotalCollectiblesByCategoryType, categoryType) or 0
-    end
-
+    local cached = unlockedIdsFor(categoryType)
     local list = {}
-    for i = 1, total do
-        local id = LAC.SafeCall(GetCollectibleIdFromType, categoryType, i)
-        if id then
-            local unlocked = LAC.SafeCall(IsCollectibleUnlocked, id)
-            if unlocked then
-                local rec = Collectible.Compose(id)
-                if rec then
-                    list[#list + 1] = rec
-                end
-            end
+    for i = 1, #cached.ids do
+        local rec = Collectible.Compose(cached.ids[i])
+        if rec then
+            list[#list + 1] = rec
         end
     end
-
-    local packed = { list = list, count = #list, total = total }
-    _byCategory[categoryType] = packed
-    return {
-        list = LAC.CopyList(list),
-        count = packed.count,
-        total = packed.total,
-    }
+    return { list = list, count = #list, total = cached.total }
 end
 
---- Name → id index for a category (lowercased names). Returns a copy of the map.
+--- Lowercased name → id index for a category (all collectibles, not just unlocked).
+--- On duplicate names the first (lowest index) id wins. Returns a fresh map.
 function Collectible.IndexByName(categoryType)
     if categoryType == nil then
         return {}
@@ -151,16 +135,40 @@ function Collectible.IndexByName(categoryType)
     end
 
     local map = {}
-    local total = LAC.SafeCall(GetTotalCollectiblesByCategoryType, categoryType) or 0
+    local total = SafeCall(GetTotalCollectiblesByCategoryType, categoryType) or 0
     for i = 1, total do
-        local id = LAC.SafeCall(GetCollectibleIdFromType, categoryType, i)
+        local id = SafeCall(GetCollectibleIdFromType, categoryType, i)
         if id then
-            local name = cleanName(LAC.SafeCall(GetCollectibleName, id))
+            local name = staticFacts(id).name
             if name and name ~= "" then
-                map[string.lower(name)] = id
+                local key = LAC.LowerName(name)
+                if map[key] == nil then
+                    map[key] = id
+                end
             end
         end
     end
     _nameIndex[categoryType] = map
     return LAC.CopyMap(map)
+end
+
+------------------------------------------------------------
+-- Self-invalidation (read-only; ADR-008)
+------------------------------------------------------------
+
+local INVALIDATING_EVENTS = {
+    "EVENT_COLLECTION_UPDATED",
+    "EVENT_COLLECTIBLES_UNLOCK_STATE_CHANGED",
+    "EVENT_COLLECTIBLE_UPDATED",
+    "EVENT_COLLECTIBLES_UPDATED",
+}
+
+if EVENT_MANAGER and EVENT_MANAGER.RegisterForEvent then
+    local namespace = LAC.name .. "_Collectible"
+    for _, eventName in ipairs(INVALIDATING_EVENTS) do
+        local eventCode = _G[eventName]
+        if eventCode ~= nil then
+            EVENT_MANAGER:RegisterForEvent(namespace, eventCode, Collectible.InvalidateLists)
+        end
+    end
 end

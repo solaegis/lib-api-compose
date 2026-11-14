@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
--- SolaegisAddonTemplate Manifest Validator
+-- LibApiCompose Manifest Validator
 -- Enforces ESOUI Section 1 technical requirements (wiki + best practices).
 
 local REQUIRED_FIELDS = {
@@ -10,12 +10,7 @@ local REQUIRED_FIELDS = {
     "APIVersion",
 }
 
-local OPTIONAL_FIELDS = {
-    "SavedVariables",
-    "OptionalDependsOn",
-    "DependsOn",
-    "Description",
-}
+-- Optional fields (not enforced): SavedVariables, OptionalDependsOn, DependsOn, Description.
 
 local DEV_ADDON_VERSION_PLACEHOLDERS = {
     ["@addon-build-version@"] = true,
@@ -56,10 +51,15 @@ local function validate_manifest(filepath)
     for line in content:gmatch("[^\r\n]*") do
         line_num = line_num + 1
         if #line > MAX_LINE_BYTES then
-            table.insert(errors, string.format(
-                "Line %d is %d bytes (max %d); excess is silently ignored by ESO",
-                line_num, #line, MAX_LINE_BYTES
-            ))
+            table.insert(
+                errors,
+                string.format(
+                    "Line %d is %d bytes (max %d); excess is silently ignored by ESO",
+                    line_num,
+                    #line,
+                    MAX_LINE_BYTES
+                )
+            )
         end
 
         local field, value = line:match("^##%s*([^:]+):%s*(.+)$")
@@ -67,17 +67,18 @@ local function validate_manifest(filepath)
             field = trim(field)
             value = trim(value)
             found_fields[field] = value
-            if field:lower():find("this add%-on is not created", 1, true)
+            if
+                field:lower():find("this add%-on is not created", 1, true)
                 or value:lower():find(LICENSE_NEEDLE, 1, true)
-                or line:lower():find(LICENSE_NEEDLE, 1, true) then
+                or line:lower():find(LICENSE_NEEDLE, 1, true)
+            then
                 has_license = true
             end
         elseif line:lower():find(LICENSE_NEEDLE, 1, true) then
             has_license = true
         end
 
-        if not line:match("^##") and not line:match("^;") and not line:match("^#")
-            and line:match("%S") then
+        if not line:match("^##") and not line:match("^;") and not line:match("^#") and line:match("%S") then
             table.insert(referenced_files, trim(line))
         end
     end
@@ -94,10 +95,7 @@ local function validate_manifest(filepath)
     end
 
     if found_fields.Title and #found_fields.Title > MAX_TITLE_LEN then
-        table.insert(errors, string.format(
-            "Title is %d characters (max %d)",
-            #found_fields.Title, MAX_TITLE_LEN
-        ))
+        table.insert(errors, string.format("Title is %d characters (max %d)", #found_fields.Title, MAX_TITLE_LEN))
     end
 
     if found_fields.Version then
@@ -105,25 +103,25 @@ local function validate_manifest(filepath)
         if version == "@project-version@" then
             print("   ℹ️  Using @project-version@ placeholder (Git-based versioning)")
         elseif not version:match("^%d+%.%d+%.%d+") then
-            table.insert(warnings, string.format(
-                "Version '%s' doesn't follow semantic versioning or @project-version@",
-                version
-            ))
+            table.insert(
+                warnings,
+                string.format("Version '%s' doesn't follow semantic versioning or @project-version@", version)
+            )
         end
     end
 
     if found_fields.AddOnVersion then
         local aov = found_fields.AddOnVersion
         if DEV_ADDON_VERSION_PLACEHOLDERS[aov] then
-            table.insert(warnings, string.format(
-                "AddOnVersion is still placeholder '%s' (set integer via set-addon-version.sh at build)",
-                aov
-            ))
+            table.insert(
+                warnings,
+                string.format(
+                    "AddOnVersion is still placeholder '%s' (set integer via set-addon-version.sh at build)",
+                    aov
+                )
+            )
         elseif not aov:match("^%d+$") then
-            table.insert(errors, string.format(
-                "AddOnVersion must be a positive integer (ESO atoi); got '%s'",
-                aov
-            ))
+            table.insert(errors, string.format("AddOnVersion must be a positive integer (ESO atoi); got '%s'", aov))
         elseif tonumber(aov) < 1 then
             table.insert(errors, "AddOnVersion must be a positive integer (>= 1)")
         end
@@ -147,10 +145,7 @@ local function validate_manifest(filepath)
             handle:close()
         end
         if not file_path:match("%.lua$") and not file_path:match("%.xml$") then
-            table.insert(warnings, string.format(
-                "Referenced file '%s' doesn't have .lua or .xml extension",
-                file_path
-            ))
+            table.insert(warnings, string.format("Referenced file '%s' doesn't have .lua or .xml extension", file_path))
         end
     end
 

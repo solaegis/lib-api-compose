@@ -2,7 +2,8 @@
 # Set ## AddOnVersion: from semver (major*10000 + minor*100 + patch).
 # Usage: scripts/set-addon-version.sh <manifest.txt> <semver>
 # Example: 1.2.3 → 10203 ; 1.0.0 → 10000
-# Non-semver (dev, SHA) → 0
+# Non-semver (dev, SHA) → keep the committed integer in the manifest (dev floor), else 1.
+# Fails if minor or patch >= 100 (the encoding would collide).
 
 set -euo pipefail
 
@@ -34,15 +35,29 @@ if [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([.-].*)?$ ]]; then
     MAJOR="${BASH_REMATCH[1]}"
     MINOR="${BASH_REMATCH[2]}"
     PATCH="${BASH_REMATCH[3]}"
+    if [ "$MINOR" -ge 100 ] || [ "$PATCH" -ge 100 ]; then
+        echo "❌ Version $VERSION: minor and patch must be < 100 for AddOnVersion encoding"
+        exit 1
+    fi
     ENCODED=$((MAJOR * 10000 + MINOR * 100 + PATCH))
 elif [[ "$VERSION" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
     MAJOR="${BASH_REMATCH[1]}"
     MINOR="${BASH_REMATCH[2]}"
+    if [ "$MINOR" -ge 100 ]; then
+        echo "❌ Version $VERSION: minor must be < 100 for AddOnVersion encoding"
+        exit 1
+    fi
     ENCODED=$((MAJOR * 10000 + MINOR * 100))
 else
-    # Untagged/dev builds: use floor 1 so ZIP validation and DependsOn>=1 still work.
-    echo "⚠️  Version '$VERSION' is not semver — AddOnVersion set to 1"
-    ENCODED=1
+    # Untagged/dev builds: keep the committed integer so DependsOn>=N consumers still load.
+    CURRENT=$(grep "^## AddOnVersion:" "$MANIFEST" | sed 's/^## AddOnVersion:[[:space:]]*//' | tr -d '\r')
+    if [[ "$CURRENT" =~ ^[1-9][0-9]*$ ]]; then
+        ENCODED="$CURRENT"
+        echo "⚠️  Version '$VERSION' is not semver — keeping committed AddOnVersion ${ENCODED}"
+    else
+        ENCODED=1
+        echo "⚠️  Version '$VERSION' is not semver — AddOnVersion set to 1"
+    fi
 fi
 
 if [ "$(uname -s)" = "Darwin" ]; then

@@ -43,7 +43,7 @@ tasks:
           echo "luacheck not found. Install with: luarocks install luacheck"
           exit 1
         fi
-        luacheck {{.SRC_DIR}} --config .luacheckrc
+        luacheck {{.SRC_DIR}} tests scripts/validate-manifest.lua --config .luacheckrc
       - echo "Lint passed"
     silent: true
 
@@ -52,7 +52,7 @@ tasks:
     cmds:
       - |
         echo "Auto-fixing Luacheck issues..."
-        luacheck {{.SRC_DIR}} --config .luacheckrc --fix || true
+        luacheck {{.SRC_DIR}} tests scripts/validate-manifest.lua --config .luacheckrc --fix || true
       - echo "Auto-fix complete"
     silent: true
 
@@ -65,7 +65,7 @@ tasks:
           echo "StyLua not found. Install with: brew install stylua"
           exit 1
         fi
-        stylua --config-path .stylua.toml {{.SRC_DIR}}
+        stylua --config-path .stylua.toml {{.SRC_DIR}} tests scripts/validate-manifest.lua
       - echo "Code formatted successfully"
     silent: true
 
@@ -74,7 +74,7 @@ tasks:
     cmds:
       - |
         echo "Checking Lua code formatting..."
-        stylua --config-path .stylua.toml --check {{.SRC_DIR}}
+        stylua --config-path .stylua.toml --check {{.SRC_DIR}} tests scripts/validate-manifest.lua
       - echo "Code formatting is correct"
     silent: true
 
@@ -226,7 +226,7 @@ tasks:
 
   test:
     desc: Run all tests (unit + lint + validate)
-    deps: [test:unit, lint, validate:all]
+    deps: [test:unit, lint, format:check, validate:all]
     cmds:
       - echo "All tests passed"
     silent: true

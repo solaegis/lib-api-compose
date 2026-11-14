@@ -26,10 +26,25 @@ local level = LAC.SafeCall(GetUnitLevel, "player")
 
 -- Compose → decide → act with raw handles on the record
 local slot = LAC.BagSlot.Compose(BAG_BACKPACK, i)
-if slot then
+if slot and not slot.isLocked then
     -- UseItem(slot.bagId, slot.slotIndex)  -- in product code, with CallSecureProtected as needed
 end
+
+-- Walk a bag (0-based slots; craft bag supported). Return true to stop early.
+LAC.BagSlot.ForBag(BAG_BACKPACK, function(rec)
+    if rec.isGear and not rec.isBound then
+        -- ...
+    end
+end)
+
+-- Feature detection across library versions
+if LAC.AtLeast(10100) then
+    -- use an API added in 1.1.0
+end
 ```
+
+Records are always fresh tables you own. Collectible static facts are memoised; unlocked/active state is
+read live, and category lists are invalidated by the library's own collection events.
 
 ## Versioning
 

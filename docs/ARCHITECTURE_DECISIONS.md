@@ -27,7 +27,7 @@ Bootstrap date: 2026-11-14.
 
 **Decision:** `## Version:` = semver from git tag (`@project-version@`). `## AddOnVersion:` = `major*10000 + minor*100 + patch` (e.g. `1.2.3` → `10203`). Script: `scripts/set-addon-version.sh`.
 
-**Consequences:** One tag drives both fields. Non-semver builds encode as `0`. First release `v1.0.0` → `10000`.
+**Consequences:** One tag drives both fields. Minor/patch must stay `< 100` (script fails otherwise). The source manifest commits a real integer (not a placeholder) so symlink dev installs satisfy consumers' `DependsOn`; non-semver builds keep that committed integer. First release `v1.0.0` → `10000`. `LAC.AtLeast(n)` exposes the same number at runtime.
 
 ---
 
@@ -97,9 +97,11 @@ Bootstrap date: 2026-11-14.
 
 **Context:** Shared libs can leak events, mutate caches across addons, or wrap combat-locked writes unsafely.
 
-**Decision:** Read/query only (no Use*/Set*/Request*). Fresh return tables / copied lists. No SavedVariables. No lib EVENT_MANAGER / CALLBACK bus. Soft-fail missing ZOS symbols via SafeCall. Optional LibDebugLogger only. Zero required DependsOn.
+**Decision:** Read/query only (no Use*/Set*/Request*). Fresh return tables / copied lists. No SavedVariables. No CALLBACK bus. Soft-fail missing ZOS symbols via SafeCall (a nil function returns `false`/`nil` silently). Optional LibDebugLogger only. Zero required DependsOn.
 
-**Consequences:** Consumers call `ClearCache` after their own inventory/collectible events.
+**Amendment (2026-11-14):** The lib may register EVENT_MANAGER handlers **solely to invalidate its own caches** (Collectible: collection/unlock events). It never re-emits events or exposes callbacks. Volatile facts (unlocked, active, nickname) are never cached at all.
+
+**Consequences:** Caches are shared by every consumer addon, so correctness can't depend on each consumer remembering to invalidate. `ClearCache` stays public for forced refreshes.
 
 ---
 
@@ -109,7 +111,7 @@ Bootstrap date: 2026-11-14.
 
 **Context:** Need readable records, reliable lists, and fast keys without clever Lua.
 
-**Decision:** Named compose records + nested sub-records; `opts?` tables; `nil` = miss; `LAC.NONE` sentinel for explicit none in lists; `{ list, count, total? }`; SlotKey / HotbarSlotKey; ForLinked. No metatable freeze, weak tables, Result monads, or OOP classes.
+**Decision:** Named compose records + nested sub-records; `opts?` tables; `nil` = miss; `LAC.NONE` sentinel for explicit none in lists; `{ list, count, total? }`; SlotKey / HotbarSlotKey (`category * 2^24 + slot`, safe for BAG_VIRTUAL where slotIndex is the itemId); ForLinked. No metatable freeze, weak tables, Result monads, or OOP classes.
 
 **Consequences:** Field contracts are semver-stable; document in README / Compose headers.
 
@@ -145,6 +147,6 @@ Bootstrap date: 2026-11-14.
 
 **Context:** ESO APIs unavailable in CI.
 
-**Decision:** Plain Lua mock harness under `tests/` (`task test:unit` / `tests/run.lua`) covering SafeCall, Iterate, BagSlot/Gear, ItemLink.
+**Decision:** Plain Lua mock harness under `tests/` (`task test:unit` / `tests/run.lua`) covering every module. Mock stubs mirror real ZOS return shapes (documented inline) so arity mistakes fail in CI. CI runs on Lua 5.1 and LuaJIT.
 
 **Consequences:** Green CI is necessary but not sufficient; install:live for in-game checks.

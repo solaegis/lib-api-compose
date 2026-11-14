@@ -1,7 +1,7 @@
 ## Title: LibApiCompose
 ## Author: solaegis
 ## Version: @project-version@
-## AddOnVersion: @addon-build-version@
+## AddOnVersion: 10000
 ## APIVersion: 101051 101050
 ## IsLibrary: true
 ## OptionalDependsOn: LibDebugLogger

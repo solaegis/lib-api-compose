@@ -1,4 +1,4 @@
-# SolaegisAddonTemplate Build Exclusions — ESOUI PC allows *.lua, *.xml, *.txt, *.md only
+# LibApiCompose Build Exclusions — ESOUI PC allows *.lua, *.xml, *.txt, *.md only
 
 .git
 .gitignore

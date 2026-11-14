@@ -10,13 +10,7 @@ local function scriptRoot()
 end
 
 local ROOT = scriptRoot()
-package.path = ROOT
-    .. "/tests/?.lua;"
-    .. ROOT
-    .. "/tests/?/init.lua;"
-    .. ROOT
-    .. "/?.lua;"
-    .. (package.path or "")
+package.path = ROOT .. "/tests/?.lua;" .. ROOT .. "/tests/?/init.lua;" .. ROOT .. "/?.lua;" .. (package.path or "")
 
 local suites = {}
 local currentSuite = nil
@@ -89,6 +83,8 @@ _G.mock = mock
 dofile(ROOT .. "/tests/test_safecall.lua")
 dofile(ROOT .. "/tests/test_bagslot.lua")
 dofile(ROOT .. "/tests/test_iterate.lua")
+dofile(ROOT .. "/tests/test_collectible.lua")
+dofile(ROOT .. "/tests/test_quickslot.lua")
 
 for _, suite in ipairs(suites) do
     currentSuite = suite
