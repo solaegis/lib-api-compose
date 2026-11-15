@@ -58,4 +58,5 @@ else
 fi
 
 echo "✅ Updated API version: $CURRENT_API_VERSION → $NEW_DISPLAY"
+echo "⚠️  Also update ESO_API_VERSION (the ESOUI 'compatible' string) in .github/workflows/release.yaml"
 grep "^## APIVersion:" "$MANIFEST_FILE"

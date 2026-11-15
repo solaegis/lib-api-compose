@@ -10,7 +10,9 @@ env:
   # Set to the ESOUI file id once the library is listed; "0" skips the upload.
   ESOUI_ADDON_ID: "0"
   # ESOUI "compatible" game version for the upload (resolved to an id by esoui-upload.sh).
-  ESO_API_VERSION: "12.0.0"
+  # Must match the manifest's live APIVersion: 12.1.0 = API 101051 (Update 51 / Season One).
+  # Bump it whenever scripts/update-api-version.sh changes the manifest.
+  ESO_API_VERSION: "12.1.0"
   TASK_VERSION: v3.54.0
 
 permissions:
