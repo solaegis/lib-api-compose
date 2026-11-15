@@ -118,8 +118,7 @@ local LAC = LibApiCompose
 
 --- Resolve a typed mount name to an owned collectible record.
 local function findOwnedMount(typed)
-    local index = LAC.Collectible.IndexByName(COLLECTIBLE_CATEGORY_TYPE_MOUNT)
-    local id = index[LAC.LowerName(typed)]
+    local id = LAC.Collectible.FindByName(COLLECTIBLE_CATEGORY_TYPE_MOUNT, typed)
     if not id then
         return nil, "no mount called " .. typed
     end

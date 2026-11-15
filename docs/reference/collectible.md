@@ -15,10 +15,13 @@ Collectible.Compose(collectibleId, opts?) -> rec | nil
 |---|---|---|
 | `collectibleId` | `integer \| string` | Converted with `tonumber`. |
 | `opts.skipCache` | `boolean?` | Re-read name, icon and category instead of using (and filling) the per-id cache. |
+| `opts.includeDescription` | `boolean?` | Also fetch `description`. Default `false`. |
+| `opts.includeLink` | `boolean?` | Also build `link`. Default `false`. |
 
-**Returns:** a [record](#record), or `nil` when the id isn't a positive number.
+**Returns:** a [record](#record), or `nil` when the id isn't a positive number or isn't a collectible (no name
+and no category).
 
-Name, icon and category are cached per id. `unlocked`, `active` and `nickname` are read live on every call.
+Name, icon and category are cached per id. Everything else is read live on every call.
 
 ```lua
 local LAC = LibApiCompose
@@ -64,11 +67,23 @@ Collectible.IndexByName(categoryType) -> table
 Map of lowercased, formatted name → collectible id for **every** collectible in the category (locked or not).
 On duplicate names the first id wins. Intended for resolving user-typed names; prefer ids everywhere else.
 
-**Returns:** a fresh map (`{}` for a `nil` category). Cached per category and cleared by collection events.
+**Returns:** a fresh map (`{}` for a `nil` category) — a full copy on every call. For single lookups use
+[`FindByName`](#collectiblefindbyname). The underlying index is cached per category until `ClearCache`.
+
+*Since 1.0.0.*
+
+### `Collectible.FindByName`
+
+```text
+Collectible.FindByName(categoryType, name) -> integer | nil
+```
+
+Collectible id for a name in a category. Case-insensitive; grammar suffixes are ignored. Constant time after
+the first call per category.
 
 ```lua
 local LAC = LibApiCompose
-local id = LAC.Collectible.IndexByName(COLLECTIBLE_CATEGORY_TYPE_MOUNT)[LAC.LowerName("Bay Dun Horse")]
+local id = LAC.Collectible.FindByName(COLLECTIBLE_CATEGORY_TYPE_MOUNT, "Bay Dun Horse")
 ```
 
 *Since 1.0.0.*
@@ -89,8 +104,9 @@ Drops the per-id static facts, category lists and name indexes. `LAC.ClearCache(
 Collectible.InvalidateLists()
 ```
 
-Drops category lists and name indexes but keeps per-id static facts. Registered as the handler for the
-collection events listed in [Caching](../guides/caching.md#self-invalidation).
+Drops the unlocked-by-category lists. Per-id static facts and name indexes are kept (neither depends on unlock
+state). Registered as the handler for the collection events listed in
+[Caching](../guides/caching.md#self-invalidation).
 
 *Since 1.0.0.*
 
@@ -101,13 +117,19 @@ collection events listed in [Caching](../guides/caching.md#self-invalidation).
 | `id` | `integer` | argument | — | identity |
 | `name` | `string?` | `GetCollectibleName` (fallback `GetCollectibleInfo`) + `FormatName` | yes | |
 | `nickname` | `string?` | `GetCollectibleNickname` + `FormatName` | no | `nil` when empty |
+| `description` | `string?` | `GetCollectibleDescription` | no | only with `opts.includeDescription` |
+| `link` | `string?` | `GetCollectibleLink` | no | only with `opts.includeLink` |
 | `icon` | `string?` | `GetCollectibleIcon` | yes | |
 | `category` | `CollectibleCategoryType?` | `GetCollectibleCategoryType` | yes | |
 | `unlocked` | `boolean` | `IsCollectibleUnlocked` | no | |
+| `unlockState` | `CollectibleUnlockState?` | `GetCollectibleUnlockStateById` | no | owned vs ESO Plus vs trial |
 | `active` | `boolean` | `IsCollectibleActive(id, GAMEPLAY_ACTOR_CATEGORY_PLAYER)` | no | |
+| `isBlocked` | `boolean` | `IsCollectibleBlocked(id, GAMEPLAY_ACTOR_CATEGORY_PLAYER)` | no | cannot be used here/now |
+| `cooldownRemaining` | `integer?` | `GetCollectibleCooldownAndDuration` (1st) | no | milliseconds |
+| `cooldownDuration` | `integer?` | `GetCollectibleCooldownAndDuration` (2nd) | no | milliseconds |
 
 ## Events registered
 
 LAC registers `Collectible.InvalidateLists` under the namespace `LibApiCompose_Collectible` for each of these
 that exists on the client: `EVENT_COLLECTION_UPDATED`, `EVENT_COLLECTIBLES_UNLOCK_STATE_CHANGED`,
-`EVENT_COLLECTIBLE_UPDATED`, `EVENT_COLLECTIBLES_UPDATED`.
+`EVENT_COLLECTIBLE_UPDATED`.

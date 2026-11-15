@@ -93,7 +93,6 @@ tasks:
     cmds:
       - task dev:install:deps
       - pre-commit install
-      - task install:dev
     silent: true
     status:
       - test -f .git/hooks/pre-commit

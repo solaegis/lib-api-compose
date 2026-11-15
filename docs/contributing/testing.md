@@ -14,8 +14,8 @@ task test             # tests + lint + format + validations
 
 1. defines a tiny test DSL (`describe`, `it`, `assertEqual`, `assertTruthy`, `assertFalsy`);
 2. loads `tests/mock/eso.lua`, which installs ZOS globals and exposes helpers as `mock`;
-3. loads every `src/*.lua` file in manifest order;
-4. loads each `tests/test_*.lua` suite and runs every case, printing `✓` / `✗` and exiting non-zero on failure.
+3. loads the files listed in `LibApiCompose.txt`, in manifest order — the same list the game loads;
+4. discovers every `tests/test_*.lua` suite and runs every case, printing `✓` / `✗` and exiting non-zero on failure.
 
 ## The mock
 
@@ -75,8 +75,19 @@ end)
 ## Adding a suite
 
 1. Create `tests/test_<area>.lua`.
-2. Add `dofile(ROOT .. "/tests/test_<area>.lua")` to `tests/run.lua`.
+2. It is picked up automatically (the runner loads every `tests/test_*.lua`).
 3. If you used new test-only globals, add them to the `files["tests/**/*.lua"]` block in `.luacheckrc`.
+
+## Checking the mock against the real API
+
+The mock is only as good as its signatures. `task dev:validate:zos` (part of `task test`) downloads ZOS's
+`ESOUIDocumentation.txt` for the live API into `.cache/` and runs `scripts/zos-api.lua`, which fails when:
+
+- a name in the `BEGIN ZOS API` block of `.luacheckrc` doesn't exist in that API version, or is no longer used;
+- a mock stub of a multi-return function lacks a `-- returns: N` line matching the documented return count;
+- `src/Symbols.lua` (the list `LAC.SelfTest()` checks in game) is stale — regenerate with `task dev:zos:write`.
+
+Offline, the documentation checks are skipped with a warning; in CI a missing document fails the build.
 
 ## What unit tests can't cover
 
@@ -84,6 +95,7 @@ Green tests mean the logic is right *given the mock*. Before a release, also:
 
 ```text
 task install:live, then /reloadui in game, then for example:
+/script d(LibApiCompose.SelfTest())
 /script d(LibApiCompose.BagSlot.Compose(BAG_BACKPACK, 0))
 /script d(LibApiCompose.Quickslot.ComposeWheel().count)
 /script d(LibApiCompose.Companion.ComposeActive())

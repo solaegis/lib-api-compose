@@ -1,9 +1,13 @@
--- LibApiCompose — Quickslot.Compose (style E)
+-- LibApiCompose — Quickslot.Compose (style E): the utility wheels
+--
+-- Wheels (quickslot, ally, emote, memento, tool) use slots 1..WHEEL_SIZE. Skill bars use a
+-- different slot range — see Hotbar.lua.
 
 local LAC = LibApiCompose
 LAC.Quickslot = LAC.Quickslot or {}
 local Quickslot = LAC.Quickslot
 local SafeCall = LAC.SafeCall
+local NonEmpty = LAC.NonEmpty
 
 Quickslot.WHEEL_SIZE = type(ACTION_BAR_UTILITY_BAR_SIZE) == "number" and ACTION_BAR_UTILITY_BAR_SIZE or 8
 
@@ -11,15 +15,24 @@ local function defaultHotbar()
     return HOTBAR_CATEGORY_QUICKSLOT_WHEEL
 end
 
-local function nonEmpty(s)
-    return type(s) == "string" and s ~= ""
+--- True when hotbarCategory is one of the utility wheels.
+function Quickslot.IsWheel(hotbarCategory)
+    if hotbarCategory == nil then
+        return false
+    end
+    return hotbarCategory == HOTBAR_CATEGORY_QUICKSLOT_WHEEL
+        or hotbarCategory == HOTBAR_CATEGORY_ALLY_WHEEL
+        or hotbarCategory == HOTBAR_CATEGORY_EMOTE_WHEEL
+        or hotbarCategory == HOTBAR_CATEGORY_MEMENTO_WHEEL
+        or hotbarCategory == HOTBAR_CATEGORY_TOOL_WHEEL
 end
 
---- Compose utility-wheel / hotbar slot → fresh record (always returned; check isEmpty).
+--- Compose a utility-wheel slot → fresh record (always returned; check isEmpty).
 --- Identity: hotbarCategory, slotIndex, actionType, actionId
---- Fields: isEmpty, name, texture, icon, count, usable, collectibleCategory
---- slotIndex is 1-based for GetSlotBoundId-style APIs.
-function Quickslot.Compose(slotIndex, hotbarCategory, _opts)
+--- Fields: isEmpty, isCurrent, name, texture, icon, count, usable, itemLink,
+---         cooldownRemaining (ms), cooldownDuration (ms), collectibleCategory
+--- slotIndex is 1-based. hotbarCategory defaults to the quickslot wheel.
+function Quickslot.Compose(slotIndex, hotbarCategory)
     if slotIndex == nil then
         return nil
     end
@@ -32,27 +45,36 @@ function Quickslot.Compose(slotIndex, hotbarCategory, _opts)
         or not actionId
         or actionId == 0
 
-    local name, texture, count, usable = nil, nil, nil, false
+    local name, texture, count, usable, itemLink = nil, nil, nil, false, nil
+    local cooldownRemaining, cooldownDuration = nil, nil
     if not isEmpty then
-        name = LAC.FormatName(SafeCall(GetSlotName, slotIndex, hotbarCategory))
-        texture = SafeCall(GetSlotTexture, slotIndex, hotbarCategory)
+        name = NonEmpty(LAC.FormatName(SafeCall(GetSlotName, slotIndex, hotbarCategory)))
+        texture = NonEmpty(SafeCall(GetSlotTexture, slotIndex, hotbarCategory))
         count = SafeCall(GetSlotItemCount, slotIndex, hotbarCategory)
         usable = SafeCall(IsSlotUsable, slotIndex, hotbarCategory) == true
+        local cdOk, remain, duration = LAC.SafeCallMulti(GetSlotCooldownInfo, slotIndex, hotbarCategory)
+        if cdOk then
+            cooldownRemaining, cooldownDuration = remain, duration
+        end
+        if actionType == ACTION_TYPE_ITEM then
+            itemLink = NonEmpty(SafeCall(GetSlotItemLink, slotIndex, hotbarCategory))
+        end
     end
 
     local collectibleCategory = nil
     local icon = texture
-    if not isEmpty and actionType == ACTION_TYPE_COLLECTIBLE and actionId > 0 then
+    if not isEmpty and actionType == ACTION_TYPE_COLLECTIBLE then
         local rec = LAC.Collectible.Compose(actionId)
         if rec then
             collectibleCategory = rec.category
-            if not nonEmpty(icon) then
-                icon = rec.icon
-            end
-            if not nonEmpty(name) then
-                name = rec.name
-            end
+            icon = icon or rec.icon
+            name = name or rec.name
         end
+    end
+
+    local isCurrent = false
+    if hotbarCategory == defaultHotbar() then
+        isCurrent = SafeCall(GetCurrentQuickslot) == slotIndex
     end
 
     return {
@@ -61,18 +83,27 @@ function Quickslot.Compose(slotIndex, hotbarCategory, _opts)
         actionType = actionType,
         actionId = actionId,
         isEmpty = isEmpty,
+        isCurrent = isCurrent,
         name = name,
         texture = texture,
         icon = icon,
         count = count,
         usable = usable,
+        itemLink = itemLink,
+        cooldownRemaining = cooldownRemaining,
+        cooldownDuration = cooldownDuration,
         collectibleCategory = collectibleCategory,
     }
 end
 
---- All wheel slots 1..WHEEL_SIZE for a hotbar category (default: quickslot wheel).
+--- All slots 1..WHEEL_SIZE of a utility wheel (default: quickslot wheel).
 --- Returns { list = {records incl. empty}, count = nonEmptyCount, total = WHEEL_SIZE }.
+--- A non-wheel category (e.g. a skill bar — use Hotbar.ComposeBar) returns an empty result.
 function Quickslot.ComposeWheel(hotbarCategory)
+    hotbarCategory = hotbarCategory or defaultHotbar()
+    if not Quickslot.IsWheel(hotbarCategory) then
+        return { list = {}, count = 0, total = 0 }
+    end
     local list = {}
     local count = 0
     for slotIndex = 1, Quickslot.WHEEL_SIZE do

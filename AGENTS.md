@@ -16,5 +16,6 @@
 - Version: semver `## Version:`; encoded `## AddOnVersion:` (`1.0.0` → `10000`).
 - OptionalDependsOn: LibDebugLogger only. No SavedVariables. No LAM. No LibStub.
 - Consumers: `## DependsOn: LibApiCompose>=10000`.
-- Unit tests: `tests/run.lua` via `task test:unit`.
+- Unit tests: `tests/run.lua` via `task test:unit` (modules from the manifest, suites auto-discovered).
+- ZOS API drift: `task dev:validate:zos` checks `.luacheckrc` symbols and mock arity against ESOUIDocumentation.txt; `task dev:zos:write` regenerates `src/Symbols.lua`.
 - SoT decisions: `docs/ARCHITECTURE_DECISIONS.md`.

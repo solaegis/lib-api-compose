@@ -6,15 +6,20 @@
 ## IsLibrary: true
 ## OptionalDependsOn: LibDebugLogger
 ## Description: solaegis ESO compose/enrich helpers and canonical SafeCall. DependsOn: LibApiCompose>=10000
-##
-## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or any other company.
-## The Elder Scrolls(R) Online(TM) and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
+; This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or any other company.
+; The Elder Scrolls(R) Online(TM) and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
 
 src/Core.lua
 src/Iterate.lua
+src/ItemLink.lua
 src/BagSlot.lua
 src/Gear.lua
 src/Collectible.lua
 src/Quickslot.lua
-src/ItemLink.lua
+src/Hotbar.lua
 src/Companion.lua
+src/Unit.lua
+src/Currency.lua
+src/Skill.lua
+src/Buff.lua
+src/Symbols.lua

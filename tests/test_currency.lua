@@ -1,0 +1,41 @@
+describe("Currency", function()
+    it("Compose reads an amount at a location", function()
+        mock.reset()
+        mock.setCurrency(CURT_MONEY, CURRENCY_LOCATION_CHARACTER, 12345)
+        mock.setCurrency(CURT_MONEY, CURRENCY_LOCATION_BANK, 99)
+        local C = LibApiCompose.Currency
+        local carried = C.Compose(CURT_MONEY)
+        assertEqual(carried.type, CURT_MONEY)
+        assertEqual(carried.location, CURRENCY_LOCATION_CHARACTER)
+        assertEqual(carried.amount, 12345)
+        assertEqual(carried.name, "Currency1")
+        assertEqual(carried.icon, "currency1.dds")
+        assertEqual(carried.canBeStored, true)
+        assertEqual(C.Compose(CURT_MONEY, CURRENCY_LOCATION_BANK).amount, 99)
+    end)
+
+    it("Compose returns nil for invalid currency types", function()
+        mock.reset()
+        assertFalsy(LibApiCompose.Currency.Compose(nil))
+        assertFalsy(LibApiCompose.Currency.Compose(0))
+    end)
+
+    it("ComposeAll lists only currencies stored at the location", function()
+        mock.reset()
+        mock.setCurrency(CURT_CROWNS, CURRENCY_LOCATION_ACCOUNT, 500)
+        local C = LibApiCompose.Currency
+        local onCharacter = C.ComposeAll()
+        assertEqual(onCharacter.total, #C.TYPES)
+        assertEqual(onCharacter.count, #C.TYPES - 1, "crowns are account-wide")
+        local onAccount = C.ComposeAll(CURRENCY_LOCATION_ACCOUNT)
+        assertEqual(onAccount.count, 1)
+        assertEqual(onAccount.list[1].type, CURT_CROWNS)
+        assertEqual(onAccount.list[1].amount, 500)
+    end)
+
+    it("TYPES only holds constants defined on this client", function()
+        for _, currencyType in ipairs(LibApiCompose.Currency.TYPES) do
+            assertEqual(type(currencyType), "number")
+        end
+    end)
+end)

@@ -4,8 +4,8 @@
 
 LibApiCompose is a standalone library. Install it once and every addon that depends on it shares it.
 
-- **Minion:** search for *LibApiCompose* and install.
-- **Manual:** unzip so the folder is `Documents/Elder Scrolls Online/live/AddOns/LibApiCompose/`
+- **Minion:** search for *LibApiCompose* and install (once the library is listed on ESOUI).
+- **Manual:** download the ZIP from the [GitHub releases](https://github.com/solaegis/lib-api-compose/releases) and unzip so the folder is `Documents/Elder Scrolls Online/live/AddOns/LibApiCompose/`
   (the folder must contain `LibApiCompose.txt`). Then enable it in the in-game **Add-Ons** menu.
 
 ## For addon authors
@@ -38,8 +38,8 @@ Keep the alias `local` at the top of each file. There is no global `LAC`.
 
 ### 3. Optional: LibDebugLogger
 
-If [LibDebugLogger](https://www.esoui.com/downloads/info2275-LibDebugLogger.html) is installed, LAC logs every
-failed `SafeCall` with a traceback under the `LibApiCompose` tag. You don't need to declare it; LAC lists it as
+If [LibDebugLogger](https://www.esoui.com/downloads/info2275-LibDebugLogger.html) is installed, LAC logs each
+distinct failed `SafeCall` under the `LibApiCompose` tag. You don't need to declare it; LAC lists it as
 `## OptionalDependsOn`.
 
 ## Checking it loaded

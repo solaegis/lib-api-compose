@@ -83,12 +83,17 @@ nav:
       - reference/index.md
       - Core: reference/core.md
       - Iterate: reference/iterate.md
+      - ItemLink: reference/itemlink.md
       - BagSlot: reference/bagslot.md
       - Gear: reference/gear.md
       - Collectible: reference/collectible.md
       - Quickslot: reference/quickslot.md
-      - ItemLink: reference/itemlink.md
+      - Hotbar: reference/hotbar.md
       - Companion: reference/companion.md
+      - Unit: reference/unit.md
+      - Currency: reference/currency.md
+      - Skill: reference/skill.md
+      - Buff: reference/buff.md
       - Record schemas: reference/records.md
       - Stability policy: reference/stability.md
   - Contributing:

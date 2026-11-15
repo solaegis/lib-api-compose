@@ -63,9 +63,13 @@ end
 On failure, `SafeCallMulti` returns `false` and the **original** error value (usually a string with file and
 line). `SafeCall` throws that away and returns `nil`.
 
-When [LibDebugLogger](https://www.esoui.com/downloads/info2275-LibDebugLogger.html) is installed, every failure
-is logged under the `LibApiCompose` tag with a full traceback, so you can find the failing call in the
-DebugLogViewer without adding any logging of your own. Without it, failures are silent.
+When [LibDebugLogger](https://www.esoui.com/downloads/info2275-LibDebugLogger.html) is installed, each distinct
+failure is logged once under the `LibApiCompose` tag — including calls to a function that doesn't exist on the
+client. Run `LibApiCompose.SetDebug(true)` to add full tracebacks and find the failing call in the
+DebugLogViewer. Without LibDebugLogger, failures are silent.
+
+After a game patch, `/script d(LibApiCompose.SelfTest())` lists any ZOS function or constant the library reads
+that no longer exists.
 
 ## Arguments are passed through unchanged
 

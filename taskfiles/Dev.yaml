@@ -43,7 +43,7 @@ tasks:
           echo "luacheck not found. Install with: luarocks install luacheck"
           exit 1
         fi
-        luacheck {{.SRC_DIR}} tests scripts/validate-manifest.lua --config .luacheckrc
+        luacheck {{.SRC_DIR}} tests scripts/validate-manifest.lua scripts/zos-api.lua --config .luacheckrc
       - echo "Lint passed"
     silent: true
 
@@ -52,7 +52,7 @@ tasks:
     cmds:
       - |
         echo "Auto-fixing Luacheck issues..."
-        luacheck {{.SRC_DIR}} tests scripts/validate-manifest.lua --config .luacheckrc --fix || true
+        luacheck {{.SRC_DIR}} tests scripts/validate-manifest.lua scripts/zos-api.lua --config .luacheckrc --fix || true
       - echo "Auto-fix complete"
     silent: true
 
@@ -65,7 +65,7 @@ tasks:
           echo "StyLua not found. Install with: brew install stylua"
           exit 1
         fi
-        stylua --config-path .stylua.toml {{.SRC_DIR}} tests scripts/validate-manifest.lua
+        stylua --config-path .stylua.toml {{.SRC_DIR}} tests scripts/validate-manifest.lua scripts/zos-api.lua
       - echo "Code formatted successfully"
     silent: true
 
@@ -74,7 +74,7 @@ tasks:
     cmds:
       - |
         echo "Checking Lua code formatting..."
-        stylua --config-path .stylua.toml --check {{.SRC_DIR}} tests scripts/validate-manifest.lua
+        stylua --config-path .stylua.toml --check {{.SRC_DIR}} tests scripts/validate-manifest.lua scripts/zos-api.lua
       - echo "Code formatting is correct"
     silent: true
 
@@ -201,9 +201,43 @@ tasks:
         bash scripts/validate-esoui-compliance.sh
     silent: true
 
+  validate:zos:
+    desc: Check every ZOS symbol the library reads against the ESO API documentation
+    cmds:
+      - |
+        LUA_BIN=""
+        if command -v luajit >/dev/null 2>&1; then
+          LUA_BIN=luajit
+        elif command -v lua >/dev/null 2>&1; then
+          LUA_BIN=lua
+        else
+          echo "lua/luajit not found"
+          exit 1
+        fi
+        echo "  Checking ZOS API symbols..."
+        DOC="$(bash scripts/fetch-eso-api-doc.sh || true)"
+        # In CI a missing API document is an error; offline dev machines get a warning.
+        STRICT=""
+        if [ -n "${CI:-}" ]; then
+          STRICT="--strict"
+        fi
+        "$LUA_BIN" scripts/zos-api.lua check "$DOC" $STRICT
+    silent: true
+
+  zos:write:
+    desc: Regenerate src/Symbols.lua from the ZOS API block of .luacheckrc
+    cmds:
+      - |
+        if command -v luajit >/dev/null 2>&1; then
+          luajit scripts/zos-api.lua write
+        else
+          lua scripts/zos-api.lua write
+        fi
+    silent: true
+
   validate:all:
     desc: Run all validation checks
-    deps: [validate, validate:changelog, validate:readme, validate:esoui]
+    deps: [validate, validate:changelog, validate:readme, validate:esoui, validate:zos]
     cmds:
       - echo "All validations passed"
     silent: true

@@ -11,7 +11,7 @@ kept correct automatically.
 | Collectible name, icon, category | Yes, per id | Static for the session; `LAC.ClearCache()` drops it |
 | Collectible `unlocked`, `active`, `nickname` | **No** — read live on every `Compose` | — |
 | Unlocked ids per category (`ComposeUnlockedByCategory`) | Yes, per category | Collection events (below) or `ClearCache` |
-| Name → id index per category (`IndexByName`) | Yes, per category | Collection events or `ClearCache` |
+| Name → id index per category (`IndexByName`, `FindByName`) | Yes, per category | `ClearCache` only (it does not depend on unlock state) |
 | Everything else | No | — |
 
 Records built from cached data are still fresh tables (see [Core concepts](concepts.md#records-are-fresh-and-yours)).
@@ -23,9 +23,8 @@ At load, LAC registers handlers for whichever of these events exist on the clien
 - `EVENT_COLLECTION_UPDATED`
 - `EVENT_COLLECTIBLES_UNLOCK_STATE_CHANGED`
 - `EVENT_COLLECTIBLE_UPDATED`
-- `EVENT_COLLECTIBLES_UPDATED`
 
-Each one calls `LAC.Collectible.InvalidateLists()`, which drops the category lists and name indexes. The next
+Each one calls `LAC.Collectible.InvalidateLists()`, which drops the unlocked-by-category lists. The next
 call rebuilds them. Handlers only clear LAC's own caches; LAC never re-broadcasts events or exposes callbacks
 (ADR-008).
 
@@ -41,7 +40,7 @@ facts are never cached, and lists clear themselves.
 local LAC = LibApiCompose
 
 LAC.ClearCache()                     -- drop every LAC cache
-LAC.Collectible.InvalidateLists()    -- drop only category lists and name indexes
+LAC.Collectible.InvalidateLists()    -- drop only the unlocked-by-category lists
 local fresh = LAC.Collectible.Compose(5, { skipCache = true }) -- bypass the per-id cache once
 ```
 

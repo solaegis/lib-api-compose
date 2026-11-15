@@ -15,13 +15,16 @@ function.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `fn` | `function` | Usually a ZOS API. `nil` is allowed and returns `nil` silently. |
+| `fn` | `function` | Usually a ZOS API. `nil` is allowed and returns `nil`. |
 | `...` | any | Passed through unchanged, `nil`s included. |
 
 **Returns:** the first value `fn` returned, or `nil`.
 
-**Logging:** failures are logged with a traceback when LibDebugLogger is installed. Missing functions aren't
-logged.
+**Logging:** when LibDebugLogger is installed, each *distinct* failure — an error, or a call with a missing
+function — is logged once at warning level (repeats are suppressed until `LAC.ClearCache()`).
+`LAC.SetDebug(true)` adds tracebacks. Nothing is ever printed to chat.
+
+**Cost:** one `pcall`, no allocations.
 
 ```lua
 local LAC = LibApiCompose
@@ -58,6 +61,51 @@ if ok then
     d(header)
 end
 ```
+
+*Since 1.0.0.*
+
+### `LAC.SetDebug`
+
+```text
+LAC.SetDebug(enabled)
+```
+
+Turns debug mode on (`true`) or off. In debug mode, with LibDebugLogger installed, failed calls are logged with
+a full traceback so you can find the call site. It costs a closure and two tables per `SafeCall`, so leave it
+off outside troubleshooting. The setting is shared by every addon using the library and is not saved.
+
+```lua
+LibApiCompose.SetDebug(true)
+```
+
+*Since 1.0.0.*
+
+### `LAC.IsDebug`
+
+```text
+LAC.IsDebug() -> boolean
+```
+
+Whether debug mode is on.
+
+*Since 1.0.0.*
+
+### `LAC.SelfTest`
+
+```text
+LAC.SelfTest() -> { ok, total, missing }
+```
+
+Checks that every ZOS function and constant the library reads exists on the running client.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `ok` | `integer` | symbols present |
+| `total` | `integer` | symbols checked |
+| `missing` | `table` | array of names that are `nil` on this client |
+
+Run it after a game patch: `/script d(LibApiCompose.SelfTest())`. A non-empty `missing` means ZOS renamed or
+removed something and the fields read from it are soft-failing to `nil`.
 
 *Since 1.0.0.*
 
@@ -142,13 +190,25 @@ returned unchanged.
 
 *Since 1.0.0.*
 
+### `LAC.NonEmpty`
+
+```text
+LAC.NonEmpty(value) -> string | nil
+```
+
+Returns `value` when it is a non-empty string, otherwise `nil`. ZOS getters return `""` for "no value"; records
+use `nil`.
+
+*Since 1.0.0.*
+
 ### `LAC.ClearCache`
 
 ```text
 LAC.ClearCache()
 ```
 
-Drops every cache LAC owns (currently the Collectible caches). See [Caching](../guides/caching.md).
+Drops every cache LAC owns (the Collectible caches) and resets the logged-failure dedupe, so failures are
+reported again. See [Caching](../guides/caching.md).
 
 *Since 1.0.0.*
 
@@ -184,6 +244,11 @@ Shallow copy of every key/value pair. `nil` returns `{}`.
 | `LAC.HOTBAR.CATEGORY_PRIMARY` | `HotBarCategory` | `HOTBAR_CATEGORY_PRIMARY` |
 | `LAC.HOTBAR.CATEGORY_BACKUP` | `HotBarCategory` | `HOTBAR_CATEGORY_BACKUP` |
 | `LAC.HOTBAR.CATEGORY_QUICKSLOT_WHEEL` | `HotBarCategory` | `HOTBAR_CATEGORY_QUICKSLOT_WHEEL` |
+| `LAC.HOTBAR.CATEGORY_ALLY_WHEEL` | `HotBarCategory` | `HOTBAR_CATEGORY_ALLY_WHEEL` |
+| `LAC.HOTBAR.CATEGORY_EMOTE_WHEEL` | `HotBarCategory` | `HOTBAR_CATEGORY_EMOTE_WHEEL` |
+| `LAC.HOTBAR.CATEGORY_MEMENTO_WHEEL` | `HotBarCategory` | `HOTBAR_CATEGORY_MEMENTO_WHEEL` |
+| `LAC.HOTBAR.CATEGORY_TOOL_WHEEL` | `HotBarCategory` | `HOTBAR_CATEGORY_TOOL_WHEEL` |
+| `LAC.BAGS` | `table` | Bag groups for `BagSlot.ForBags` — see [BagSlot](bagslot.md#constants) |
 
 `LAC._internal` and any name starting with `_` are private and may change in any release
 (see [Stability](stability.md)).

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, master]
 
+env:
+  # Keep in step with .pre-commit-config.yaml (StyLua) and the local toolchain.
+  TASK_VERSION: v3.54.0
+
 jobs:
   test:
     name: Lint and validate (${{ matrix.lua }})
@@ -27,18 +31,17 @@ jobs:
       - name: Install tools
         run: |
           luarocks install luacheck
-          wget -qO- https://github.com/JohnnyMorganz/StyLua/releases/download/v2.3.1/stylua-linux-x86_64.zip | funzip -p > stylua
+          wget -qO- https://github.com/JohnnyMorganz/StyLua/releases/download/v2.6.0/stylua-linux-x86_64.zip | funzip -p > stylua
           chmod +x stylua
           sudo mv stylua /usr/local/bin/
-          curl -sL https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
+          curl -sL https://taskfile.dev/install.sh | sudo sh -s -- -d -b /usr/local/bin "$TASK_VERSION"
 
+      # Unit tests, lint, format check, manifest/ESOUI validation and the ZOS API drift check
+      # (downloads ESOUIDocumentation.txt; a missing document fails the build in CI).
       - name: Run tests
         run: task test
 
-      - name: Build release ZIP
-        run: task build:fast
-
-      - name: ESOUI compliance
+      - name: Build and validate release ZIP
         run: |
-          chmod +x scripts/validate-esoui-compliance.sh scripts/validate-zip.sh
+          task build:fast
           bash scripts/validate-esoui-compliance.sh

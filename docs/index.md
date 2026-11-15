@@ -58,5 +58,5 @@ end
 | Lua | 5.1 semantics (ESO's runtime); no `goto` |
 | API version | `101051 101050` (see the manifest) |
 | Hard dependencies | none |
-| Optional dependencies | [LibDebugLogger](https://www.esoui.com/downloads/info2275-LibDebugLogger.html) — error logging with tracebacks |
+| Optional dependencies | [LibDebugLogger](https://www.esoui.com/downloads/info2275-LibDebugLogger.html) — error logging (tracebacks with `LAC.SetDebug(true)`) |
 | Global | `LibApiCompose` (convention: `local LAC = LibApiCompose`) |

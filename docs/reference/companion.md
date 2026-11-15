@@ -10,6 +10,10 @@
 Companion.ComposeActive(opts?) -> rec | nil
 ```
 
+| Parameter | Type | Description |
+|---|---|---|
+| `opts.includePending` | `boolean?` | When no companion is active but one is being summoned, return its record with `isActive = false`, `isPending = true`. Default `false`. |
+
 **Returns:** a [record](#record) for the summoned companion, or `nil` when none is active
 (`HasActiveCompanion()` isn't `true`).
 
@@ -40,9 +44,14 @@ exist.
 
 | Field | Type | ZOS source | Notes |
 |---|---|---|---|
-| `defId` | `integer?` | `GetActiveCompanionDefId` | |
+| `defId` | `integer?` | `GetActiveCompanionDefId` / `GetPendingCompanionDefId` | |
 | `collectibleId` | `integer?` | `GetCompanionCollectibleId` / `GetActiveCollectibleByType` | identity |
 | `id` | `integer?` | | alias of `collectibleId` |
-| `name` | `string?` | `Collectible.Compose` | formatted |
+| `name` | `string?` | `Collectible.Compose`, fallback `GetCompanionName` | formatted |
 | `icon` | `string?` | `Collectible.Compose` | |
-| `isActive` | `boolean` | | always `true` |
+| `isActive` | `boolean` | `HasActiveCompanion` | `false` only for a pending record |
+| `isPending` | `boolean` | `HasPendingCompanion` | `true` only with `opts.includePending` |
+| `level` | `integer?` | `GetActiveCompanionLevelInfo` (1st) | active companion only |
+| `xp` | `integer?` | `GetActiveCompanionLevelInfo` (2nd) | experience into the current level |
+| `rapport` | `integer?` | `GetActiveCompanionRapport` | |
+| `rapportLevel` | `CompanionRapportLevel?` | `GetActiveCompanionRapportLevel` | |

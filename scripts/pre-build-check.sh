@@ -1,5 +1,5 @@
 #!/bin/bash
-# EsoCombatLock - Pre-Build Validation Script
+# LibApiCompose - Pre-Build Validation Script
 
 set -e
 

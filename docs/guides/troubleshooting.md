@@ -26,7 +26,7 @@
 
 ## A collectible list is out of date
 
-Unlocked and active state is read live. Category lists and name indexes are cached and cleared by collection
+Unlocked and active state is read live. Unlocked-by-category lists are cached and cleared by collection
 events. If a list is still stale (for example a client where none of those events fire), call
 `LibApiCompose.Collectible.InvalidateLists()` or `LibApiCompose.ClearCache()`.
 
@@ -37,7 +37,8 @@ slot index is the item id.
 
 ## A SafeCall returns nil and I don't know why
 
-Install LibDebugLogger and open its viewer: every failed call is logged under `LibApiCompose` with a traceback.
+Install LibDebugLogger and open its viewer: each distinct failed call is logged once under `LibApiCompose`.
+For a traceback, run `/script LibApiCompose.SetDebug(true)` and trigger the call again.
 Or use the multi-return form to see the error:
 
 ```lua

@@ -37,7 +37,7 @@
   Use it for any name you fetch yourself.
 - Compare names case-insensitively with `LAC.LowerName`, which uses `zo_strlower` so German and French
   characters lower correctly. `string.lower` doesn't handle UTF-8.
-- Never match on display names when an id exists. `Collectible.IndexByName` is for user-typed input only.
+- Never match on display names when an id exists. `Collectible.FindByName` is for user-typed input only.
 
 ## Defensive reading
 
@@ -48,7 +48,8 @@
 
 ## Errors and debugging
 
-- Install LibDebugLogger while developing; LAC logs every failed ZOS call with a traceback.
+- Install LibDebugLogger while developing; LAC logs each distinct failed ZOS call once (`LAC.SetDebug(true)` adds
+  tracebacks).
 - Use `LAC.SafeCallMulti` when you need to know *why* a call failed (`ok, err`).
 - Don't wrap your own functions in `SafeCall` to hide bugs.
 

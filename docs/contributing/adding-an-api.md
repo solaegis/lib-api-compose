@@ -20,8 +20,11 @@ Checklist for a new function, record field or module. Copy it into your PR descr
 - [ ] Booleans normalised with `== true`; display names through `LAC.FormatName`.
 - [ ] `opts` keys default to the cheapest behaviour.
 - [ ] Shared helpers go on `LAC._internal`, not on the public module table.
-- [ ] New module? Add it to `LibApiCompose.txt` in dependency order and to `tests/run.lua`.
-- [ ] Every new ZOS global is listed in `.luacheckrc` `read_globals`.
+- [ ] New module? Add it to `LibApiCompose.txt` in dependency order, before `src/Symbols.lua` (the test runner
+      reads the manifest).
+- [ ] Every new ZOS global is listed, sorted, in the `BEGIN ZOS API` block of `.luacheckrc`; then run
+      `task dev:zos:write`. `task dev:validate:zos` checks each name against the ESO API documentation.
+- [ ] Empty strings from ZOS getters are normalised with `LAC.NonEmpty`.
 
 ## Tests
 

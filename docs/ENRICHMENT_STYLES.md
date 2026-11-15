@@ -8,7 +8,7 @@
 | D. Slot/bag compose | bag+slot | `BagSlot.Compose`, `BagSlot.ComposeWorn`, `Gear.ComposeFromSlot` |
 | E. Hotbar/quickslot | slot + hotbar category | `Quickslot.Compose`, `Quickslot.ComposeWheel` |
 | F. Unit/tag | unitTag buffs/stats | Primitives only; domain deferred |
-| G. Aggregate | Walk → list/summary | Collectible category lists; `ForLinked` |
+| G. Aggregate | Walk → list/summary | Collectible category lists; `MapLinked` |
 | H. Product policy | FSM / affinity / junk thresholds | **Stay in product** |
 
 ## Deferred (CM-heavy)

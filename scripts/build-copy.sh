@@ -32,6 +32,12 @@ if [ -f "$SOURCE_DIR/README_ESOUI.txt" ]; then
     echo "  ✓ Copied README_ESOUI.txt"
 fi
 
+# The MIT license requires the license text to travel with every copy.
+if [ -f "$SOURCE_DIR/LICENSE" ]; then
+    cp "$SOURCE_DIR/LICENSE" "$DEST_DIR/LICENSE.txt"
+    echo "  ✓ Copied LICENSE as LICENSE.txt"
+fi
+
 if [ -d "$SOURCE_DIR/src" ]; then
     mkdir -p "$DEST_DIR/src"
     for ext in "${ALLOWED_EXTENSIONS[@]}"; do

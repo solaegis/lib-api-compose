@@ -18,6 +18,7 @@ Snapshot of the item in one bag slot.
 | `bagId` | `Bag` | `BAG_BACKPACK`, `BAG_BANK`, `BAG_WORN`, `BAG_VIRTUAL`, … |
 | `slotIndex` | `integer` | 0-based slot. For `BAG_VIRTUAL` it is the item id. |
 | `opts.includeName` | `boolean?` | Also fetch the formatted item name. Default `false`. |
+| `opts.includeCreator` | `boolean?` | Also fetch the crafter's name. Default `false`. |
 
 **Returns:** a [record](#record), or `nil` when `bagId`/`slotIndex` is `nil`, the slot is empty
 (`GetItemId <= 0`), or the item has no link.
@@ -42,12 +43,39 @@ Calls `fn(rec)` with a fresh `Compose` record for every occupied slot.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `bagId` | `Bag` | Bag to walk. `BAG_VIRTUAL` is walked with `GetNextVirtualBagSlotId`; other bags `0 .. GetBagSize - 1`. |
+| `bagId` | `Bag` | Bag to walk. `BAG_VIRTUAL` and `BAG_GUILDBANK` are walked with their "next slot id" APIs; other bags `0 .. GetBagSize - 1`. |
 | `fn` | `function` | `fn(rec)`. Return `true` to stop the walk. |
-| `opts` | `table?` | Passed to `Compose`. |
+| `opts.filter` | `function?` | `filter(bagId, slotIndex, itemType)`; return `false` to skip a slot **before** it is composed. Use it to keep large walks cheap. |
+| `opts` | `table?` | Other keys are passed to `Compose`. |
+
+The guild bank only has data while it is open and loaded (after `EVENT_GUILD_BANK_ITEMS_READY`).
 
 **Returns:** number of records visited (including the one that stopped the walk). `0` when `bagId` or `fn` is
 `nil`.
+
+*Since 1.0.0.*
+
+### `BagSlot.ForBags`
+
+```text
+BagSlot.ForBags(bagIds, fn, opts?) -> integer
+```
+
+`ForBag` over a list of bags, in order. Returning `true` from `fn` stops the whole walk.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `bagIds` | `table` | Array of bags, e.g. `LAC.BAGS.BANK` or `{ BAG_BACKPACK, BAG_BANK }`. |
+
+**Returns:** total records visited.
+
+```lua
+local LAC = LibApiCompose
+local banked = 0
+LAC.BagSlot.ForBags(LAC.BAGS.BANK, function(slot)
+    banked = banked + slot.stack
+end)
+```
 
 *Since 1.0.0.*
 
@@ -58,7 +86,7 @@ BagSlot.MapBag(bagId, mapFn?, opts?) -> table
 ```
 
 Collects non-`nil` results of `mapFn(rec)` for every occupied slot, or the records themselves when `mapFn` is
-`nil`.
+`nil`. `bagId` may be one bag or a list of bags.
 
 ```lua
 local LAC = LibApiCompose
@@ -75,14 +103,15 @@ end)
 BagSlot.ComposeWorn(opts?) -> table
 ```
 
-Records for every equipped item (`BAG_WORN`), each with two extra fields:
+Records for every equipped item (`BAG_WORN`, or the active companion's `BAG_COMPANION_WORN` with
+`opts.companion = true`), each with two extra fields:
 
 | Field | Type | Source | Notes |
 |---|---|---|---|
 | `equipSlot` | `EquipSlot` | slot index | Same as `slotIndex` |
 | `equipSlotName` | `string?` | `GetString("SI_EQUIPSLOT", slot)` | Localised slot name |
 
-**Returns:** array of records; `{}` when `BAG_WORN` isn't defined.
+**Returns:** array of records; `{}` when the bag constant isn't defined.
 
 *Since 1.0.0.*
 
@@ -107,21 +136,42 @@ Unpacks a record's identity for ZOS calls: `UseItem(LAC.BagSlot.Args(rec))`. Ret
 | `uniqueId` | `id64?` | `GetItemUniqueId` | stable across moves; userdata |
 | `uniqueIdString` | `string?` | `Id64ToString(uniqueId)` | use for SavedVariables keys |
 | `name` | `string?` | `GetItemName` + `FormatName` | only with `opts.includeName` |
-| `type` | `ItemType?` | `GetItemType` | |
-| `functionalQuality` | `ItemQuality?` | `GetItemFunctionalQuality` (fallback `GetItemQuality`) | |
-| `displayQuality` | `ItemDisplayQuality?` | `GetItemInfo` (fallback `GetItemDisplayQuality`) | |
+| `creatorName` | `string?` | `GetItemCreatorName` | only with `opts.includeCreator`; `nil` when not crafted |
+| `type` | `ItemType?` | `GetItemType` (1st) | |
+| `specializedType` | `SpecializedItemType?` | `GetItemType` (2nd) | |
+| `functionalQuality` | `ItemQuality?` | `GetItemInfo` (8th), fallback `GetItemFunctionalQuality` | |
+| `displayQuality` | `ItemDisplayQuality?` | `GetItemInfo` (9th), fallback `GetItemDisplayQuality` | colour shown in the UI |
 | `stack` | `integer` | `GetSlotStackSize` | `1` if unreadable |
-| `maxStack` | `integer?` | `GetSlotStackSize` (2nd return) | |
+| `maxStack` | `integer?` | `GetSlotStackSize` (2nd) | |
 | `icon` | `string?` | `GetItemInfo` | texture path |
 | `sellValue` | `integer?` | `GetItemInfo` | per item, to a merchant |
 | `equipType` | `EquipType?` | `GetItemInfo` | |
+| `itemStyleId` | `integer?` | `GetItemInfo` (7th) | |
 | `meetsUsageRequirement` | `boolean?` | `GetItemInfo` | |
 | `requiredLevel` | `integer?` | `GetItemRequiredLevel` | |
 | `requiredCP` | `integer?` | `GetItemRequiredChampionPoints` | |
+| `bindType` | `BindType?` | `GetItemBindType` | how it binds; see `isBound` for whether it has |
+| `condition` | `integer?` | `GetItemCondition` | gear only (0–100) |
 | `isCompanion` | `boolean` | `GetItemActorCategory` | companion gear |
 | `isGear` | `boolean` | item type | weapon or armor (jewelry is armor) |
 | `isGlyph` | `boolean` | item type | armor, weapon or jewelry glyph |
-| `isLocked` | `boolean` | `GetItemInfo` (fallback `IsItemPlayerLocked`) | player lock |
+| `isPlayerLocked` | `boolean` | `IsItemPlayerLocked` | the lock the player toggles in the inventory |
+| `isSlotLocked` | `boolean` | `GetItemInfo` (5th) | transient: pending trade, mail attachment, in use |
+| `isLocked` | `boolean` | | `isPlayerLocked or isSlotLocked` — check this before any destructive action |
 | `isJunk` | `boolean` | `IsItemJunk` | |
 | `isBound` | `boolean` | `IsItemBound` | |
 | `isStolen` | `boolean` | `IsItemStolen` | |
+| `isUnique` | `boolean` | `IsItemLinkUnique` | |
+| `isInArmory` | `boolean` | `IsItemInArmory` | part of a saved armory build |
+| `isUsable` | `boolean` | `IsItemUsable` (1st) | |
+| `isSetCollectionPiece` | `boolean` | `IsItemLinkSetCollectionPiece` | |
+| `isSetCollectionUnlocked` | `boolean` | `IsItemSetCollectionPieceUnlocked` | `false` when not a set-collection piece |
+
+## Constants
+
+| Name | Value | Meaning |
+|---|---|---|
+| `LAC.BAGS.BANK` | `{ BAG_BANK, BAG_SUBSCRIBER_BANK }` | The personal bank is two bags; walk both |
+| `LAC.BAGS.HOUSE_BANKS` | `{ BAG_HOUSE_BANK_ONE … TEN }` | Storage coffers and chests |
+
+Lists contain only the constants that exist on the running client. Copy before modifying.

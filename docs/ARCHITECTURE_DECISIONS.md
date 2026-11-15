@@ -41,6 +41,11 @@ Bootstrap date: 2026-11-14.
 
 **Consequences:** Products may later alias their SafeCall to LAC. Domain files must not use raw `pcall`.
 
+**Amendment (2026-11-14):** The hot path is allocation-free (`pcall` results are forwarded through a vararg
+tail call, no result table). Tracebacks need `xpcall` plus a closure, so they are opt-in via
+`LAC.SetDebug(true)`. A nil function is still a soft failure but is no longer silent: with LibDebugLogger each
+distinct failure (error or missing function) is logged once, at warning level.
+
 ---
 
 ## ADR-004 — Enrichment styles
@@ -64,6 +69,11 @@ Bootstrap date: 2026-11-14.
 **Decision:** Ship BagSlot, Gear, Collectible, Quickslot, ItemLink.OnUse, Companion. Defer CM-heavy skills/armory/world/crafting/appearance/PvP until a second consumer needs them.
 
 **Consequences:** ECL may be the only Quickslot consumer initially; still ship it.
+
+**Amendment (2026-11-14):** Added before 1.0.0: link-based item compose (`ItemLink.Compose`,
+`Gear.ComposeFromLink`), `Hotbar` (skill bars, split from the wheel-only `Quickslot`), and the `Unit`,
+`Currency`, `Skill` and `Buff` domains. Still deferred: achievements, quests, crafting research, armory, world,
+appearance, PvP.
 
 ---
 
@@ -111,9 +121,11 @@ Bootstrap date: 2026-11-14.
 
 **Context:** Need readable records, reliable lists, and fast keys without clever Lua.
 
-**Decision:** Named compose records + nested sub-records; `opts?` tables; `nil` = miss; `LAC.NONE` sentinel for explicit none in lists; `{ list, count, total? }`; SlotKey / HotbarSlotKey (`category * 2^24 + slot`, safe for BAG_VIRTUAL where slotIndex is the itemId); ForLinked. No metatable freeze, weak tables, Result monads, or OOP classes.
+**Decision:** Named compose records + nested sub-records; `opts?` tables; `nil` = miss; `LAC.NONE` sentinel for explicit none in lists; `{ list, count, total? }`; SlotKey / HotbarSlotKey (`category * 2^24 + slot`, safe for BAG_VIRTUAL where slotIndex is the itemId); ForLinked / MapLinked. No metatable freeze, weak tables, Result monads, or OOP classes.
 
 **Consequences:** Field contracts are semver-stable; document in README / Compose headers.
+
+**Amendment (2026-11-14):** String fields are `nil`, never `""`, when the game has no value (`LAC.NonEmpty`).
 
 ---
 
@@ -150,3 +162,9 @@ Bootstrap date: 2026-11-14.
 **Decision:** Plain Lua mock harness under `tests/` (`task test:unit` / `tests/run.lua`) covering every module. Mock stubs mirror real ZOS return shapes (documented inline) so arity mistakes fail in CI. CI runs on Lua 5.1 and LuaJIT.
 
 **Consequences:** Green CI is necessary but not sufficient; install:live for in-game checks.
+
+**Amendment (2026-11-14):** "Mirrors real ZOS shapes" was unenforced and the mock drifted (`GetItemInfo` was
+stubbed with 8 returns instead of 9, hiding two wrong fields). Now enforced: `scripts/zos-api.lua`
+(`task dev:validate:zos`, part of `task test` and CI) checks every ZOS symbol in `.luacheckrc` and every
+multi-return mock stub's `-- returns: N` annotation against ZOS's `ESOUIDocumentation.txt`. The test runner
+loads modules from the manifest, and `LAC.SelfTest()` reports symbols missing on the live client.

@@ -11,7 +11,7 @@ Requirements: [Task](https://taskfile.dev), LuaJIT (or Lua 5.1), [luacheck](http
 ```bash
 brew install go-task stylua luajit pre-commit
 luarocks install luacheck
-task init           # pre-commit hooks + dev install
+task init           # pre-commit hooks
 ```
 
 ## Everyday commands

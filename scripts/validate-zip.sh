@@ -111,7 +111,6 @@ validate_zip_structure() {
         "\.pre-commit"
         "\.stylua"
         "\.luacheckrc"
-        "\.build-ignore"
         "docs/"
         "taskfiles/"
     )

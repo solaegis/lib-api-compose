@@ -30,6 +30,7 @@ describe("Quickslot", function()
         assertEqual(rec.icon, "potion.dds")
         assertEqual(rec.count, 12)
         assertEqual(rec.usable, true)
+        assertEqual(rec.isCurrent, false)
         local s, h = LibApiCompose.Quickslot.Args(rec)
         assertEqual(s, 2)
         assertEqual(h, HOTBAR_CATEGORY_QUICKSLOT_WHEEL)
@@ -58,5 +59,39 @@ describe("Quickslot", function()
         assertEqual(wheel.count, 2)
         assertEqual(wheel.list[8].actionId, 8)
         assertEqual(wheel.list[4].isEmpty, true)
+    end)
+
+    it("Compose reads cooldown, item link and the current slot", function()
+        mock.reset()
+        mock.setSlot(HOTBAR_CATEGORY_QUICKSLOT_WHEEL, 5, {
+            type = ACTION_TYPE_ITEM,
+            id = 44,
+            cooldownRemaining = 2000,
+            cooldownDuration = 45000,
+            itemLink = "|H0:item:44|h|h",
+        })
+        mock.setCurrentQuickslot(5)
+        local rec = LibApiCompose.Quickslot.Compose(5)
+        assertEqual(rec.cooldownRemaining, 2000)
+        assertEqual(rec.cooldownDuration, 45000)
+        assertEqual(rec.itemLink, "|H0:item:44|h|h")
+        assertEqual(rec.isCurrent, true)
+        assertEqual(rec.name, nil, "empty slot name becomes nil")
+    end)
+
+    it("ComposeWheel serves the other wheels and rejects skill bars", function()
+        mock.reset()
+        mock.setSlot(HOTBAR_CATEGORY_EMOTE_WHEEL, 2, { type = ACTION_TYPE_ITEM, id = 3 })
+        local Q = LibApiCompose.Quickslot
+        local emotes = Q.ComposeWheel(LibApiCompose.HOTBAR.CATEGORY_EMOTE_WHEEL)
+        assertEqual(emotes.total, 8)
+        assertEqual(emotes.count, 1)
+        assertEqual(emotes.list[2].isCurrent, false)
+        local bar = Q.ComposeWheel(HOTBAR_CATEGORY_PRIMARY)
+        assertEqual(bar.total, 0)
+        assertEqual(#bar.list, 0)
+        assertEqual(Q.IsWheel(HOTBAR_CATEGORY_TOOL_WHEEL), true)
+        assertEqual(Q.IsWheel(HOTBAR_CATEGORY_BACKUP), false)
+        assertEqual(Q.IsWheel(nil), false)
     end)
 end)

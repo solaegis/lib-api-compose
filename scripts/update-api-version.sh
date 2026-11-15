@@ -1,9 +1,10 @@
 #!/bin/bash
 # Update ESO API Version for LibApiCompose
-# Supports one value (single) or two (Live + PTS dual-load).
+# Supports one value, or two so the library loads on both Live and PTS during a PTS cycle
+# (order does not matter to the client; list the Live version first — tooling reads it).
 # Usage:
 #   ./scripts/update-api-version.sh 101052
-#   ./scripts/update-api-version.sh 101051 101050
+#   ./scripts/update-api-version.sh 101051 101052
 
 set -euo pipefail
 
@@ -13,7 +14,7 @@ MANIFEST_FILE="${ADDON_NAME}.txt"
 usage() {
     echo "Usage: $0 <API_VERSION> [API_VERSION_PTS]"
     echo "Example (single): $0 101052"
-    echo "Example (dual Live+PTS): $0 101051 101050"
+    echo "Example (dual Live+PTS): $0 101051 101052"
     exit 1
 }
 
@@ -30,7 +31,7 @@ if ! [[ "$PRIMARY" =~ ^[0-9]{6}$ ]]; then
 fi
 
 if [ -n "$SECONDARY" ] && ! [[ "$SECONDARY" =~ ^[0-9]{6}$ ]]; then
-    echo "❌ Second API version must be 6 digits (e.g., 101050)"
+    echo "❌ Second API version must be 6 digits (e.g., 101052)"
     exit 1
 fi
 

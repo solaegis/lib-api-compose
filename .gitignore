@@ -19,3 +19,6 @@ book/
 # Docs site
 site/
 .venv-docs/
+
+# Downloaded ESO API documentation (scripts/fetch-eso-api-doc.sh)
+.cache/

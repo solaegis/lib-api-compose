@@ -8,7 +8,7 @@ wrapped — errors in your own code still surface.
 |---|---|---|
 | Flat list | `GetNumX()` + `GetX(i)` | `ForIndex`, `MapIndex` |
 | Nested lists | `GetNumA()`, `GetNumB(a)`, `GetC(a, b)` | `NestedFor`, `NestedMap` |
-| Linked ids | `GetNextX(lastId)` | `ForLinked` |
+| Linked ids | `GetNextX(lastId)` | `ForLinked` / `MapLinked` |
 | Bag slots | `GetBagSize(bag)`, slots `0..size-1`; craft bag by id | `BagSlot.ForBag`, `BagSlot.MapBag` |
 
 The `Iterate` functions are also exposed directly on `LAC` (`LAC.ForIndex` is `LAC.Iterate.ForIndex`).
@@ -31,7 +31,7 @@ end)
 
 `getNum` is called with no arguments, so wrap APIs that need arguments in a closure.
 
-When `getAt` returns several values, pass `needMulti = true` and receive up to eight of them:
+When `getAt` returns several values, pass `needMulti = true` and receive all of them:
 
 ```lua
 local LAC = LibApiCompose
@@ -66,12 +66,14 @@ end)
 
 ## Linked ids
 
-`getNext(nil)` must return the first id and `getNext(id)` the next; `nil` ends the walk.
+`getNext(nil)` must return the first id and `getNext(id)` the next. The walk ends on `nil`, on `0` (pass
+`zeroIsValid = true` if `0` is a real id), or when `getNext` returns the id it was given. `ForLinked` calls your
+function per id; `MapLinked` collects.
 
 ```lua
 local LAC = LibApiCompose
 
-local craftBagIds = LAC.ForLinked(GetNextVirtualBagSlotId)
+local craftBagIds = LAC.MapLinked(GetNextVirtualBagSlotId)
 ```
 
 A walk stops after `maxSteps` (default `LAC.Iterate.MAX_LINKED_STEPS`, 100000) so a buggy or cyclic `getNext`

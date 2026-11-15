@@ -69,22 +69,33 @@ end
 local mock = require("mock.eso")
 mock.reset()
 
-dofile(ROOT .. "/src/Core.lua")
-dofile(ROOT .. "/src/Iterate.lua")
-dofile(ROOT .. "/src/BagSlot.lua")
-dofile(ROOT .. "/src/Gear.lua")
-dofile(ROOT .. "/src/Collectible.lua")
-dofile(ROOT .. "/src/Quickslot.lua")
-dofile(ROOT .. "/src/ItemLink.lua")
-dofile(ROOT .. "/src/Companion.lua")
+-- Load the library exactly as the game does: the file list comes from the manifest.
+local loaded = 0
+for line in io.lines(ROOT .. "/LibApiCompose.txt") do
+    local path = line:match("^%s*([%w_/%.%-]+%.lua)%s*$")
+    if path then
+        dofile(ROOT .. "/" .. path)
+        loaded = loaded + 1
+    end
+end
+assert(loaded > 0, "manifest lists no Lua files")
 
 _G.mock = mock
 
-dofile(ROOT .. "/tests/test_safecall.lua")
-dofile(ROOT .. "/tests/test_bagslot.lua")
-dofile(ROOT .. "/tests/test_iterate.lua")
-dofile(ROOT .. "/tests/test_collectible.lua")
-dofile(ROOT .. "/tests/test_quickslot.lua")
+-- Every tests/test_*.lua is a suite file (sorted for a stable order).
+local testFiles = {}
+local listing = assert(io.popen('ls "' .. ROOT .. '/tests"'))
+for name in listing:lines() do
+    if name:match("^test_.+%.lua$") then
+        testFiles[#testFiles + 1] = name
+    end
+end
+listing:close()
+table.sort(testFiles)
+assert(#testFiles > 0, "no test files found")
+for _, name in ipairs(testFiles) do
+    dofile(ROOT .. "/tests/" .. name)
+end
 
 for _, suite in ipairs(suites) do
     currentSuite = suite
